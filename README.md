@@ -1,75 +1,109 @@
-FinSight — Gestão de Despesas Pessoais
+# 💰 FinSight – Sistema de Gestão de Despesas
 
-Projeto desenvolvido no âmbito do módulo UFCD 5425.
+Projeto desenvolvido no âmbito do módulo **UFCD 5425 – Bases de Dados**.
 
-  --------------------------------------
-  REQUISITOS
-  --------------------------------------
-  - .NET 8 SDK - PostgreSQL (instalado
-  localmente) - Windows (para execução
-  dos scripts .bat)
-  --------------------------------------
-  UTILIZADOR DE TESTE
-  --------------------------------------
-  Email: test@finsight.pt 
-  Password: Test123!
+A aplicação FinSight permite ao utilizador registar, organizar e analisar as suas despesas mensais, definir orçamentos por categoria e receber alertas quando se aproxima dos limites definidos com base no seu salário.
 
-  --------------------------------------
+---
 
-BASE DE DADOS
+## 🚀 Funcionalidades
 
-Nome da BD: DB_FinSight 
-Motor: PostgreSQL (local)
+- Registo e autenticação de utilizadores (Email / Google)
+- Gestão de despesas pessoais
+- Gestão de categorias
+- Definição de orçamentos mensais
+- Dashboard com:
+  - Total mensal gasto
+  - Alertas financeiros
+  - Distribuição por categoria
+  - Evolução dos últimos 6 meses
+- Exportação de dados (CSV e Excel)
+- Alertas automáticos baseados no salário
+- Interface com modo claro / escuro
 
-A base de dados será criada automaticamente ao executar o instalar.bat.
+---
 
-  --------------------------------------
-  PORTA DA APLICAÇÃO
-  --------------------------------------
-  https://localhost:7093
+## 🧰 Tecnologias Utilizadas
 
-  --------------------------------------
+- ASP.NET Core MVC (.NET 8)
+- Entity Framework Core
+- PostgreSQL
+- Bootstrap 5
+- Chart.js
+- ClosedXML
 
-EXECUÇÃO
+---
 
-1) Instalação
+## ⚙️ Requisitos
+
+Antes de executar a aplicação, é necessário ter instalado:
+
+- [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- PostgreSQL
+
+---
+
+## ▶️ Instalação e Execução
+
+### 1️⃣ Instalar dependências e criar base de dados
 
 Executar: instalar.bat
 
-Este script: - Instala as dependências do projeto - Cria a base de
-dados - Aplica as migrations - Insere dados de teste (categorias,
-despesas e orçamentos)
+Este script:
 
-2) Iniciar aplicação
+- Instala as dependências do projeto
+- Cria a base de dados local
+- Aplica as migrações necessárias
+
+---
+
+### 2️⃣ Iniciar a aplicação
 
 Executar: iniciar.bat
 
-Este script: - Inicia o servidor backend - Abre automaticamente o
-browser em: https://localhost:7093
+Este script:
 
-3) Parar aplicação
+- Inicia o servidor de base de dados
+- Inicia o backend da aplicação
+- Abre automaticamente a aplicação no browser
+
+---
+
+### 3️⃣ Parar a aplicação
 
 Executar: parar.bat
 
-Este script: - Encerra todos os processos do backend
+Este script:
 
-  --------------------------------------
-  FUNCIONALIDADES
-  --------------------------------------
-  - Registo e Login - Login com Google
-  (OAuth 2.0) - Gestão de Categorias -
-  Registo de Despesas - Gestão de
-  Orçamentos Mensais - Dashboard com
-  gráficos (Chart.js) - Alertas de
-  limite mensal - Exportação de
-  Despesas: - CSV - Excel (.xlsx) - Tema
-  claro/escuro
+- Encerra todos os processos relacionados com o projeto
 
-  --------------------------------------
+---
 
-NOTAS
+## 👤 Utilizador de Teste
 
-Caso a base de dados já exista e seja necessário recriar: - Apagar a BD
-DB_FinSight no pgAdmin - Executar novamente o instalar.bat
+Após a instalação, será criado automaticamente o seguinte utilizador:
 
-------------------------------------------------------------------------
+Email: test@finsight.pt
+Password: Test123!
+
+Este utilizador contém dados de exemplo para:
+
+- Despesas
+- Categorias
+- Orçamentos
+
+---
+
+## 📊 Exportação de Dados
+
+A aplicação permite exportar as despesas filtradas para:
+
+- CSV
+- Excel (.xlsx)
+
+---
+
+## 📌 Notas
+
+- A aplicação utiliza PostgreSQL localmente.
+- A porta utilizada por defeito é: https://localhost:7093
