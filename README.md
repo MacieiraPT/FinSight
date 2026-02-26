@@ -83,8 +83,8 @@ Este script:
 
 Após a instalação, será criado automaticamente o seguinte utilizador:
 
-Email: test@finsight.pt
-Password: Test123!
+- Email: test@finsight.pt
+- Password: Test123!
 
 Este utilizador contém dados de exemplo para:
 
