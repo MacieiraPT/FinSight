@@ -11,14 +11,15 @@ Projeto desenvolvido no âmbito do módulo UFCD 5425.
   --------------------------------------
   UTILIZADOR DE TESTE
   --------------------------------------
-  Email: test@finsight.pt Password:
-  Test123!
+  Email: test@finsight.pt 
+  Password: Test123!
 
   --------------------------------------
 
 BASE DE DADOS
 
-Nome da BD: DB_FinSight Motor: PostgreSQL (local)
+Nome da BD: DB_FinSight 
+Motor: PostgreSQL (local)
 
 A base de dados será criada automaticamente ao executar o instalar.bat.
 
