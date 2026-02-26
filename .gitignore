@@ -1,0 +1,18 @@
+# Build
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Logs
+*.log
+
+# Node (se usares algo)
+node_modules/
+
+# App secrets
+appsettings.json
+appsettings.Development.json

@@ -1,0 +1,288 @@
+﻿@model IEnumerable<GestaoDespesas.Models.Despesa>
+
+@{
+    ViewData["Title"] = "Despesas";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <!-- TEXTO -->
+    <div>
+        <div class="text-muted">Consulta e gere todas as tuas despesas.</div>
+    </div>
+
+    <!-- BOTÕES AGRUPADOS -->
+    <div class="d-flex align-items-center gap-2">
+
+        <a asp-action="Create" class="btn btn-primary">
+            Nova despesa
+        </a>
+
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+
+                <i class="bi bi-download me-1"></i>
+                Exportar
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3">
+                <li>
+                    <form asp-action="ExportarCsv" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" name="categoriaId" value="@Context.Request.Query["categoriaId"]" />
+                        <input type="hidden" name="ano" value="@Context.Request.Query["ano"]" />
+                        <input type="hidden" name="mes" value="@Context.Request.Query["mes"]" />
+                        <input type="hidden" name="q" value="@Context.Request.Query["q"]" />
+
+                        <button type="submit" class="dropdown-item">
+                            <i class="bi bi-file-earmark-arrow-down me-2"></i>
+                            CSV
+                        </button>
+                    </form>
+                </li>
+
+                <li>
+                    <form asp-action="ExportarExcel" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" name="categoriaId" value="@Context.Request.Query["categoriaId"]" />
+                        <input type="hidden" name="ano" value="@Context.Request.Query["ano"]" />
+                        <input type="hidden" name="mes" value="@Context.Request.Query["mes"]" />
+                        <input type="hidden" name="q" value="@Context.Request.Query["q"]" />
+
+                        <button type="submit" class="dropdown-item">
+                            <i class="bi bi-file-earmark-excel me-2"></i>
+                            Excel (.xlsx)
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+<!-- 🔎 FILTROS -->
+<form method="get" class="row g-3 mb-4">
+
+    <!-- Categoria -->
+    <div class="col-md-3">
+        <label class="form-label">Categoria</label>
+        <select name="categoriaId" class="form-select"
+                asp-items="ViewBag.Categorias">
+            <option value="">Todas</option>
+        </select>
+    </div>
+
+    <!-- Ano -->
+    <div class="col-md-2">
+        <label class="form-label">Ano</label>
+        <input type="number"
+               name="ano"
+               value="@ViewBag.Ano"
+               class="form-control"
+               placeholder="Ex: 2025" />
+    </div>
+
+    <!-- Mês -->
+    <div class="col-md-3">
+        <label class="form-label">Mês</label>
+        <select name="mes" class="form-select">
+            <option value="">Todos</option>
+            @for (int i = 1; i <= 12; i++)
+            {
+                <option value="@i"
+                        selected="@(ViewBag.Mes != null && (int)ViewBag.Mes == i)">
+                    @System.Globalization.CultureInfo.GetCultureInfo("pt-PT").DateTimeFormat.GetMonthName(i)
+                </option>
+            }
+        </select>
+    </div>
+
+    <!-- Pesquisa -->
+    <div class="col-md-4">
+        <label class="form-label">Pesquisar</label>
+        <input type="text"
+               name="q"
+               value="@ViewBag.Q"
+               class="form-control"
+               placeholder="Descrição..." />
+    </div>
+
+    <!-- Botões -->
+    <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            Filtrar
+        </button>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            Limpar
+        </a>
+    </div>
+
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Ainda não tens despesas registadas.
+    </div>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+
+                <th>Descrição</th>
+
+                <!-- CATEGORIA -->
+                <th>
+                    <a asp-action="Index"
+                       asp-route-sortOrder="@ViewBag.CategoriaSort"
+                       asp-route-page="@ViewBag.CurrentPage"
+                       asp-route-categoriaId="@Context.Request.Query["categoriaId"]"
+                       asp-route-ano="@Context.Request.Query["ano"]"
+                       asp-route-mes="@Context.Request.Query["mes"]"
+                       asp-route-q="@Context.Request.Query["q"]">
+
+                        Categoria
+                        @if (ViewBag.CurrentSort == "categoria")
+                        {
+                            <i class="bi bi-arrow-up"></i>
+                        }
+                        else if (ViewBag.CurrentSort == "categoria_desc")
+                        {
+                            <i class="bi bi-arrow-down"></i>
+                        }
+                    </a>
+                </th>
+
+                <!-- DATA -->
+                <th>
+                    <a asp-action="Index"
+                       asp-route-sortOrder="@ViewBag.DataSort"
+                       asp-route-page="@ViewBag.CurrentPage"
+                       asp-route-categoriaId="@Context.Request.Query["categoriaId"]"
+                       asp-route-ano="@Context.Request.Query["ano"]"
+                       asp-route-mes="@Context.Request.Query["mes"]"
+                       asp-route-q="@Context.Request.Query["q"]">
+
+                        Data
+                        @if (ViewBag.CurrentSort == "data")
+                        {
+                            <i class="bi bi-arrow-up"></i>
+                        }
+                        else if (ViewBag.CurrentSort == "data_desc")
+                        {
+                            <i class="bi bi-arrow-down"></i>
+                        }
+                    </a>
+                </th>
+
+                <!-- VALOR -->
+                <th class="text-end">
+                    <a asp-action="Index"
+                       asp-route-sortOrder="@ViewBag.ValorSort"
+                       asp-route-page="@ViewBag.CurrentPage"
+                       asp-route-categoriaId="@Context.Request.Query["categoriaId"]"
+                       asp-route-ano="@Context.Request.Query["ano"]"
+                       asp-route-mes="@Context.Request.Query["mes"]"
+                       asp-route-q="@Context.Request.Query["q"]">
+
+                        Valor
+                        @if (ViewBag.CurrentSort == "valor")
+                        {
+                            <i class="bi bi-arrow-up"></i>
+                        }
+                        else if (ViewBag.CurrentSort == "valor_desc")
+                        {
+                            <i class="bi bi-arrow-down"></i>
+                        }
+                    </a>
+                </th>
+
+                <th class="text-end" style="width:220px;">Ações</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@item.Descricao</td>
+                    <td>@item.Categoria?.Nome</td>
+                    <td>@item.Data.ToString("dd/MM/yyyy")</td>
+                    <td class="text-end fw-semibold">
+                        @item.Valor.ToString("C")
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Details" asp-route-id="@item.DespesaId"
+                           class="btn btn-sm btn-outline-secondary">Ver</a>
+
+                        <a asp-action="Edit" asp-route-id="@item.DespesaId"
+                           class="btn btn-sm btn-outline-secondary">Editar</a>
+
+                        <a asp-action="Delete" asp-route-id="@item.DespesaId"
+                           class="btn btn-sm btn-outline-danger">Apagar</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (ViewBag.TotalPages > 1)
+{
+    <nav class="mt-4 d-flex justify-content-center">
+        <ul class="pagination">
+
+            <!-- Anterior -->
+            <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(ViewBag.CurrentPage - 1)"
+                   asp-route-categoriaId="@Context.Request.Query["categoriaId"]"
+                   asp-route-ano="@Context.Request.Query["ano"]"
+                   asp-route-mes="@Context.Request.Query["mes"]"
+                   asp-route-q="@Context.Request.Query["q"]">
+                    Anterior
+                </a>
+            </li>
+
+            <!-- Números -->
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@i"
+                       asp-route-categoriaId="@Context.Request.Query["categoriaId"]"
+                       asp-route-ano="@Context.Request.Query["ano"]"
+                       asp-route-mes="@Context.Request.Query["mes"]"
+                       asp-route-q="@Context.Request.Query["q"]">
+                        @i
+                    </a>
+                </li>
+            }
+
+            <!-- Próximo -->
+            <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(ViewBag.CurrentPage + 1)"
+                   asp-route-categoriaId="@Context.Request.Query["categoriaId"]"
+                   asp-route-ano="@Context.Request.Query["ano"]"
+                   asp-route-mes="@Context.Request.Query["mes"]"
+                   asp-route-q="@Context.Request.Query["q"]">
+                    Próximo
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+}

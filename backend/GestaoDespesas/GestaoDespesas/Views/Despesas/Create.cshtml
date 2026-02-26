@@ -1,0 +1,52 @@
+﻿@model GestaoDespesas.Models.Despesa
+
+@{
+    ViewData["Title"] = "Nova despesa";
+}
+
+<div class="text-muted mb-4">Regista uma nova despesa.</div>
+
+<div class="row">
+    <div class="col-md-6 col-lg-5">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Descricao" class="form-label"></label>
+                <input asp-for="Descricao" class="form-control" />
+                <span asp-validation-for="Descricao" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Valor" class="form-label"></label>
+                <input asp-for="Valor" class="form-control" />
+                <span asp-validation-for="Valor" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Data" class="form-label"></label>
+                <input asp-for="Data" type="date" class="form-control" asp-format="{0:yyyy-MM-dd}" />
+                <span asp-validation-for="Data" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CategoriaId" class="form-label">Categoria</label>
+                <select asp-for="CategoriaId" class="form-select" asp-items="ViewBag.CategoriaId">
+                    <option value="">— Seleciona —</option>
+                </select>
+                <span asp-validation-for="CategoriaId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Observacoes" class="form-label"></label>
+                <input asp-for="Observacoes" class="form-control" />
+                <span asp-validation-for="Observacoes" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

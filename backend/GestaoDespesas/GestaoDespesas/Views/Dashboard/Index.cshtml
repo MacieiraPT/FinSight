@@ -1,0 +1,300 @@
+﻿@using System.Globalization
+@{
+    ViewData["Title"] = "Dashboard";
+    var totalMes = (decimal)ViewBag.TotalMes;
+    var categorias = ViewBag.Categorias;
+}
+
+@if (ViewBag.AlertaGrave == true)
+{
+    <div class="alert alert-danger text-center">
+        <i class="bi bi-exclamation-octagon-fill"></i>
+        Ultrapassaste o limite mensal definido com base no teu salário!
+    </div>
+}
+else if (ViewBag.Alerta == true)
+{
+    <div class="alert alert-warning text-center">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        Estás perto de atingir o limite mensal baseado no teu salário.
+    </div>
+}
+
+@if (ViewBag.Progresso != null)
+{
+    foreach (var o in ViewBag.Progresso)
+    {
+        var percent = o.Limite > 0 ? (o.TotalGasto / o.Limite) * 100 : 0;
+
+        if (percent > 100)
+        {
+            <div class="alert alert-danger text-center">
+                <i class="bi bi-exclamation-octagon-fill"></i>
+                Ultrapassaste um orçamento este mês.
+            </div>
+            break;
+        }
+        else if (percent > 80)
+        {
+            <div class="alert alert-warning text-center">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Atenção: estás perto de atingir um orçamento.
+            </div>
+            break;
+        }
+    }
+}
+
+<div class="row g-4 mb-2 justify-content-center">
+
+    <!-- TOTAL -->
+    <div class="col-lg-5 col-md-6">
+        <div class="card shadow-sm border-0 p-4 dashboard-card h-100 text-center">
+            <div class="text-muted mb-1">Total gasto este mês</div>
+
+            <div class="display-5 fw-bold text-primary lh-1">
+                @totalMes.ToString("C", new System.Globalization.CultureInfo("pt-PT"))
+            </div>
+
+            <div class="small text-muted mt-1">
+                Atualizado automaticamente
+            </div>
+        </div>
+    </div>
+
+    <!-- LIMITE -->
+    <div class="col-lg-5 col-md-6">
+        <div class="card shadow-sm border-0 p-4 dashboard-card h-100 text-center">
+
+            <small class="text-muted d-block mb-2">
+                Limite mensal de despesas
+            </small>
+
+            @if (ViewBag.LimitePermitido > 0)
+            {
+                var limite = (decimal)ViewBag.LimitePermitido;
+                var restante = limite - totalMes;
+                var percent = limite > 0 ? (totalMes / limite) * 100 : 0;
+
+                <div class="display-6 fw-bold
+            @(percent >= 100 ? "text-danger" :
+                                                percent >= 80 ? "text-warning" : "text-success")">
+
+                    @(percent >= 100
+                                    ? $"Excedeste o limite em {Math.Abs(restante).ToString("C", new System.Globalization.CultureInfo("pt-PT"))}"
+                                    : $"Restam {restante.ToString("C", new System.Globalization.CultureInfo("pt-PT"))}")
+                </div>
+
+                <small class="text-muted d-block mt-1">
+                    @percent.ToString("0")% do limite usado
+                </small>
+
+                var percentWidth = percent.ToString("0.##", CultureInfo.InvariantCulture);
+
+                <div class="progress mt-2" style="height:6px;">
+                    <div class="progress-bar
+            @(percent >= 100 ? "bg-danger" :
+                                   percent >= 80 ? "bg-warning" : "bg-success")"
+                         style="width:@(percentWidth)%;">
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-muted">
+                    Define o salário nas configurações
+                </div>
+            }
+
+        </div>
+    </div>
+
+</div>
+
+<div class="row mt-3 g-4">
+
+    <!-- Doughnut -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 p-4 dashboard-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Distribuição por categoria</h5>
+                <span class="badge bg-light text-dark">Este mês</span>
+            </div>
+
+            <div class="chart-container doughnut-chart">
+                <canvas id="graficoCategorias"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Linha -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 p-4 dashboard-card h-100">
+            <h5 class="mb-3">Últimos 6 meses</h5>
+
+            <div class="chart-container line-chart">
+                <canvas id="grafico6Meses"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@if (ViewBag.Progresso != null)
+{
+    <div class="card shadow-sm border-0 p-4 dashboard-card mt-5">
+
+        <h5 class="mb-4">Orçamentos deste mês</h5>
+
+        @foreach (var o in ViewBag.Progresso)
+        {
+            var rawPercent = o.Limite > 0 ? (o.TotalGasto / o.Limite) * 100 : 0;
+            var percent = Math.Min(rawPercent, 100);
+
+            string cor = rawPercent >= 100 ? "bg-danger"
+            : rawPercent >= 80 ? "bg-warning"
+            : "bg-success";
+
+            <div class="mb-3">
+
+                <div class="d-flex justify-content-between">
+                    <strong>@o.Categoria</strong>
+                    <span>@percent.ToString("0")%</span>
+                </div>
+
+                <div class="progress mt-2" style="height:8px;">
+                    <div class="progress-bar @cor"
+                         role="progressbar"
+                         style="width:@percent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%">
+                    </div>
+                </div>
+
+                <small class="text-muted">
+                    @o.TotalGasto.ToString("C") de @o.Limite.ToString("C")
+                </small>
+
+            </div>
+        }
+
+    </div>
+}
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+    const chartColors = window.gdGetChartColors();
+
+    Chart.defaults.color = chartColors.text;
+    Chart.defaults.borderColor = chartColors.grid;
+
+    const categorias = JSON.parse('@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Categorias))');
+    const seisMeses = JSON.parse('@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.SeisMeses))');
+
+    const labels = categorias.map(c => c.Categoria);
+    const valores = categorias.map(c => c.Total);
+
+    const labels6 = seisMeses.map(m => m.Mes);
+    const valores6 = seisMeses.map(m => m.Total);
+
+    const total = valores.reduce((a, b) => a + b, 0);
+
+    function gerarCores(n) {
+        const cores = [];
+        for (let i = 0; i < n; i++) {
+            const hue = Math.floor((360 / n) * i);
+            cores.push(`hsl(${hue}, 65%, 60%)`);
+        }
+        return cores;
+    }
+
+    const cores = gerarCores(valores.length);
+
+    new Chart(document.getElementById('graficoCategorias'), {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: valores,
+                backgroundColor: cores,
+                borderWidth: 0,
+                hoverOffset: 12
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: chartColors.text,
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    backgroundColor: chartColors.tooltipBg,
+                    titleColor: chartColors.text,
+                    bodyColor: chartColors.text,
+                    borderColor: chartColors.grid,
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed;
+                            const percent = ((value / total) * 100).toFixed(1);
+                            return `${context.label}: ${value.toLocaleString('pt-PT', {style:'currency', currency:'EUR'})} (${percent}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('grafico6Meses'), {
+        type: 'line',
+        data: {
+            labels: labels6,
+            datasets: [{
+                label: 'Total mensal',
+                data: valores6,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99,102,241,0.12)',
+                fill: 'start',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: chartColors.text
+                    }
+                },
+                tooltip: {
+                    backgroundColor: chartColors.tooltipBg,
+                    titleColor: chartColors.text,
+                    bodyColor: chartColors.text,
+                    borderColor: chartColors.grid,
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: chartColors.text },
+                    grid: { color: chartColors.grid }
+                },
+                y: {
+                    ticks: { color: chartColors.text },
+                    grid: { color: chartColors.grid }
+                }
+            }
+        }
+    });
+
+</script>
+}

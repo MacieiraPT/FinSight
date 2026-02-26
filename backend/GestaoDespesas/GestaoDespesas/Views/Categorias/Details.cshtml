@@ -1,0 +1,38 @@
+﻿@model GestaoDespesas.Models.Categoria
+
+@{
+    ViewData["Title"] = "Detalhes da categoria";
+}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <div class="text-muted">Informação completa da categoria selecionada.</div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.CategoriaId"
+           class="btn btn-outline-secondary">
+            Editar
+        </a>
+
+        <a asp-action="Index"
+           class="btn btn-outline-secondary">
+            Voltar
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <div class="row mb-3">
+            <div class="col-sm-3 text-muted">
+                Nome
+            </div>
+            <div class="col-sm-9 fw-semibold">
+                @Model.Nome
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,32 @@
+﻿@page
+@model FinancialSettingsModel
+@{
+    ViewData["Title"] = "Definições financeiras";
+}
+
+<div class="content-card">
+    <h4 class="mb-4">FinSight Financial Settings</h4>
+
+    <form method="post">
+        <div class="mb-3">
+            <label class="form-label">Salário Mensal (€)</label>
+            <input asp-for="Input.SalarioMensal" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Limite Mensal (%)</label>
+            <input asp-for="Input.LimitePercentual" class="form-control" />
+        </div>
+
+        <div class="form-check mb-3">
+            <input asp-for="Input.ReceberAlertas" class="form-check-input" />
+            <label class="form-check-label">
+                Receber alertas quando ultrapassar o limite
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Guardar
+        </button>
+    </form>
+</div>

@@ -1,0 +1,59 @@
+﻿@model IEnumerable<GestaoDespesas.Models.Categoria>
+
+@{
+    ViewData["Title"] = "Categorias";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+
+    <div>
+        <div class="text-muted">Organiza as tuas despesas por tipo.</div>
+    </div>
+
+    <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+        <a asp-action="Create" class="btn btn-primary">
+            Nova categoria
+        </a>
+
+        <form asp-action="SeedDefault" method="post" class="m-0">
+            <button type="submit" class="btn btn-outline-secondary">
+                Adicionar categorias padrão
+            </button>
+        </form>
+    </div>
+
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Ainda não tens categorias criadas.
+    </div>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th class="text-end" style="width:200px;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@item.Nome</td>
+
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@item.CategoriaId"
+                           class="btn btn-sm btn-outline-secondary">Editar</a>
+
+                        <a asp-action="Delete" asp-route-id="@item.CategoriaId"
+                           class="btn btn-sm btn-outline-danger">Apagar</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,21 @@
+﻿@model GestaoDespesas.Models.Categoria
+
+@{
+    ViewData["Title"] = "Eliminar categoria";
+}
+
+<div class="card border-danger">
+    <div class="card-body">
+        <p>Tens a certeza que queres eliminar esta categoria?</p>
+
+        <div class="fw-semibold mb-3">
+            @Model.Nome
+        </div>
+
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="CategoriaId" />
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>

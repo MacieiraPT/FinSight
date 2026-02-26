@@ -1,0 +1,54 @@
+﻿@model IEnumerable<GestaoDespesas.Models.Orcamento>
+
+@{
+    ViewData["Title"] = "Orçamentos";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="text-muted">Define limites mensais por categoria.</div>
+    </div>
+
+    <a asp-action="Create" class="btn btn-primary">
+        Novo orçamento
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Ainda não tens orçamentos definidos.
+    </div>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Categoria</th>
+                <th>Mês</th>
+                <th>Ano</th>
+                <th>Limite</th>
+                <th class="text-end">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Categoria?.Nome</td>
+                    <td>@item.Mes</td>
+                    <td>@item.Ano</td>
+                    <td class="fw-semibold">@item.Limite.ToString("C")</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@item.OrcamentoId"
+                           class="btn btn-sm btn-outline-secondary">Editar</a>
+
+                        <a asp-action="Delete" asp-route-id="@item.OrcamentoId"
+                           class="btn btn-sm btn-outline-danger">Apagar</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
