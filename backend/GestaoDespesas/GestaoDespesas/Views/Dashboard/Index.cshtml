@@ -1,22 +1,25 @@
-﻿@using System.Globalization
+@using System.Globalization
 @{
     ViewData["Title"] = "Dashboard";
     var totalMes = (decimal)ViewBag.TotalMes;
+    var totalReceitasMes = (decimal)ViewBag.TotalReceitasMes;
+    var saldoMes = (decimal)ViewBag.SaldoMes;
     var categorias = ViewBag.Categorias;
+    var ptCulture = new CultureInfo("pt-PT");
 }
 
 @if (ViewBag.AlertaGrave == true)
 {
     <div class="alert alert-danger text-center">
         <i class="bi bi-exclamation-octagon-fill"></i>
-        Ultrapassaste o limite mensal definido com base no teu salário!
+        Ultrapassaste o limite mensal definido com base @(ViewBag.UsaReceitasReais == true ? "nas tuas receitas reais" : "no teu salário")!
     </div>
 }
 else if (ViewBag.Alerta == true)
 {
     <div class="alert alert-warning text-center">
         <i class="bi bi-exclamation-triangle-fill"></i>
-        Estás perto de atingir o limite mensal baseado no teu salário.
+        Estás perto de atingir o limite mensal baseado @(ViewBag.UsaReceitasReais == true ? "nas tuas receitas reais" : "no teu salário").
     </div>
 }
 
@@ -47,27 +50,64 @@ else if (ViewBag.Alerta == true)
 
 <div class="row g-4 mb-2 justify-content-center">
 
-    <!-- TOTAL -->
-    <div class="col-lg-5 col-md-6">
+    <!-- RECEITAS -->
+    <div class="col-lg-4 col-md-6">
         <div class="card shadow-sm border-0 p-4 dashboard-card h-100 text-center">
-            <div class="text-muted mb-1">Total gasto este mês</div>
+            <div class="text-muted mb-1">Receitas este mês</div>
 
-            <div class="display-5 fw-bold text-primary lh-1">
-                @totalMes.ToString("C", new System.Globalization.CultureInfo("pt-PT"))
+            <div class="display-5 fw-bold text-success lh-1">
+                @totalReceitasMes.ToString("C", ptCulture)
             </div>
 
             <div class="small text-muted mt-1">
-                Atualizado automaticamente
+                Total de entradas registadas
             </div>
         </div>
     </div>
 
-    <!-- LIMITE -->
-    <div class="col-lg-5 col-md-6">
+    <!-- DESPESAS -->
+    <div class="col-lg-4 col-md-6">
+        <div class="card shadow-sm border-0 p-4 dashboard-card h-100 text-center">
+            <div class="text-muted mb-1">Despesas este mês</div>
+
+            <div class="display-5 fw-bold text-primary lh-1">
+                @totalMes.ToString("C", ptCulture)
+            </div>
+
+            <div class="small text-muted mt-1">
+                Total de saídas registadas
+            </div>
+        </div>
+    </div>
+
+    <!-- SALDO -->
+    <div class="col-lg-4 col-md-6">
+        <div class="card shadow-sm border-0 p-4 dashboard-card h-100 text-center">
+            <div class="text-muted mb-1">Saldo mensal</div>
+
+            <div class="display-5 fw-bold @(saldoMes >= 0 ? "text-success" : "text-danger") lh-1">
+                @saldoMes.ToString("C", ptCulture)
+            </div>
+
+            <div class="small text-muted mt-1">
+                Receitas − Despesas
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- LIMITE -->
+<div class="row g-4 mb-2 justify-content-center mt-1">
+    <div class="col-lg-8 col-md-10">
         <div class="card shadow-sm border-0 p-4 dashboard-card h-100 text-center">
 
             <small class="text-muted d-block mb-2">
                 Limite mensal de despesas
+                @if (ViewBag.UsaReceitasReais == true)
+                {
+                    <span class="badge bg-success bg-opacity-25 text-success ms-1">baseado em receitas reais</span>
+                }
             </small>
 
             @if (ViewBag.LimitePermitido > 0)
@@ -81,8 +121,8 @@ else if (ViewBag.Alerta == true)
                                                 percent >= 80 ? "text-warning" : "text-success")">
 
                     @(percent >= 100
-                                    ? $"Excedeste o limite em {Math.Abs(restante).ToString("C", new System.Globalization.CultureInfo("pt-PT"))}"
-                                    : $"Restam {restante.ToString("C", new System.Globalization.CultureInfo("pt-PT"))}")
+                                    ? $"Excedeste o limite em {Math.Abs(restante).ToString("C", ptCulture)}"
+                                    : $"Restam {restante.ToString("C", ptCulture)}")
                 </div>
 
                 <small class="text-muted d-block mt-1">
@@ -102,13 +142,12 @@ else if (ViewBag.Alerta == true)
             else
             {
                 <div class="text-muted">
-                    Define o salário nas configurações
+                    Adiciona receitas ou define o salário nas configurações
                 </div>
             }
 
         </div>
     </div>
-
 </div>
 
 <div class="row mt-3 g-4">
@@ -197,6 +236,7 @@ else if (ViewBag.Alerta == true)
 
     const labels6 = seisMeses.map(m => m.Mes);
     const valores6 = seisMeses.map(m => m.Total);
+    const receitas6 = seisMeses.map(m => m.TotalReceitas);
 
     const total = valores.reduce((a, b) => a + b, 0);
 
@@ -257,14 +297,24 @@ else if (ViewBag.Alerta == true)
         type: 'line',
         data: {
             labels: labels6,
-            datasets: [{
-                label: 'Total mensal',
-                data: valores6,
-                borderColor: '#6366f1',
-                backgroundColor: 'rgba(99,102,241,0.12)',
-                fill: 'start',
-                tension: 0.4
-            }]
+            datasets: [
+                {
+                    label: 'Receitas',
+                    data: receitas6,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.12)',
+                    fill: 'start',
+                    tension: 0.4
+                },
+                {
+                    label: 'Despesas',
+                    data: valores6,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99,102,241,0.12)',
+                    fill: 'start',
+                    tension: 0.4
+                }
+            ]
         },
         options: {
             responsive: true,
