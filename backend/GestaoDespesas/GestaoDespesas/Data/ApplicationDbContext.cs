@@ -58,6 +58,16 @@ namespace GestaoDespesas.Data
             builder.Entity<Receita>()
                 .Property(r => r.Valor)
                 .HasPrecision(18, 2);
+
+            builder.Entity<DespesaRecorrente>()
+                .Property(d => d.Valor)
+                .HasPrecision(18, 2);
+
+            builder.Entity<DespesaRecorrente>()
+                .HasOne(d => d.Categoria)
+                .WithMany()
+                .HasForeignKey(d => d.CategoriaId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
         public override int SaveChanges()
@@ -127,5 +137,7 @@ namespace GestaoDespesas.Data
         public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
         public DbSet<Receita> Receitas => Set<Receita>();
         public DbSet<UserProfile> UserProfiles { get; set; }
+        public DbSet<DespesaRecorrente> DespesasRecorrentes => Set<DespesaRecorrente>();
+        public DbSet<RegistoAuditoria> RegistosAuditoria => Set<RegistoAuditoria>();
     }
 }

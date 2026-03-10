@@ -1,6 +1,9 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
@@ -227,6 +230,88 @@ namespace GestaoDespesas.Controllers
 
             TempData["ToastSuccess"] = "Receita eliminada com sucesso!";
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ExportarCsv(int? ano, int? mes, string? q)
+        {
+            var userId = _userManager.GetUserId(User);
+            var receitas = await GetReceitasFiltradas(userId!, ano, mes, q).ToListAsync();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Descrição;Tipo;Data;Valor");
+
+            foreach (var r in receitas)
+            {
+                sb.AppendLine(
+                    $"{r.Descricao};" +
+                    $"{r.Tipo};" +
+                    $"{r.Data:dd/MM/yyyy};" +
+                    $"{r.Valor.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+                );
+            }
+
+            return File(
+                Encoding.UTF8.GetBytes(sb.ToString()),
+                "text/csv",
+                $"receitas_filtradas_{DateTime.Now:yyyyMMdd}.csv"
+            );
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ExportarExcel(int? ano, int? mes, string? q)
+        {
+            var userId = _userManager.GetUserId(User);
+            var receitas = await GetReceitasFiltradas(userId!, ano, mes, q).ToListAsync();
+
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Receitas");
+
+            worksheet.Cell(1, 1).Value = "Descrição";
+            worksheet.Cell(1, 2).Value = "Tipo";
+            worksheet.Cell(1, 3).Value = "Data";
+            worksheet.Cell(1, 4).Value = "Valor (€)";
+
+            int row = 2;
+            foreach (var r in receitas)
+            {
+                worksheet.Cell(row, 1).Value = r.Descricao;
+                worksheet.Cell(row, 2).Value = r.Tipo;
+                worksheet.Cell(row, 3).Value = r.Data.ToString("dd/MM/yyyy");
+                worksheet.Cell(row, 4).Value = r.Valor;
+                row++;
+            }
+
+            worksheet.Columns().AdjustToContents();
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+
+            return File(
+                stream.ToArray(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"receitas_filtradas_{DateTime.Now:yyyyMMdd}.xlsx"
+            );
+        }
+
+        private IQueryable<Receita> GetReceitasFiltradas(string userId, int? ano, int? mes, string? q)
+        {
+            var query = _context.Receitas
+                .Where(r => r.UserId == userId)
+                .AsQueryable();
+
+            if (ano.HasValue)
+                query = query.Where(r => r.Data.Year == ano.Value);
+
+            if (mes.HasValue)
+                query = query.Where(r => r.Data.Month == mes.Value);
+
+            if (!string.IsNullOrWhiteSpace(q))
+                query = query.Where(r => r.Descricao.Contains(q));
+
+            return query.OrderByDescending(r => r.Data);
         }
     }
 }

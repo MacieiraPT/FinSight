@@ -1,0 +1,99 @@
+@model IEnumerable<GestaoDespesas.Models.Despesa>
+
+@{
+    ViewData["Title"] = "Possíveis Duplicados";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="text-muted">
+            Despesas com o mesmo valor, data e categoria.
+            @if (ViewBag.TotalDuplicados > 0)
+            {
+                <span class="badge bg-warning text-dark ms-1">@ViewBag.TotalDuplicados encontradas</span>
+            }
+        </div>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Voltar
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle me-1"></i>
+        Não foram encontradas despesas duplicadas.
+    </div>
+}
+else
+{
+    <form asp-action="EliminarSelecionadas" method="post">
+        @Html.AntiForgeryToken()
+        <div class="mb-2">
+            <button type="submit" class="btn btn-sm btn-outline-danger" id="btnBulkDeleteDup" style="display:none;"
+                    onclick="return confirm('Tens a certeza que queres apagar as despesas selecionadas?');">
+                <i class="bi bi-trash me-1"></i>
+                Apagar selecionadas (<span id="countSelectedDup">0</span>)
+            </button>
+        </div>
+
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th style="width:40px;">
+                        <input type="checkbox" class="form-check-input" id="selectAllDup" />
+                    </th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Data</th>
+                    <th class="text-end">Valor</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="form-check-input dup-check" name="ids" value="@item.DespesaId" />
+                        </td>
+                        <td class="fw-semibold">@item.Descricao</td>
+                        <td>@item.Categoria?.Nome</td>
+                        <td>@item.Data.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end fw-semibold">@item.Valor.ToString("C")</td>
+                        <td class="text-end">
+                            <a asp-action="Delete" asp-route-id="@item.DespesaId"
+                               class="btn btn-sm btn-outline-danger">Apagar</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+}
+
+@section Scripts {
+<script>
+    (function() {
+        const selectAll = document.getElementById('selectAllDup');
+        const btnBulk = document.getElementById('btnBulkDeleteDup');
+        const countSpan = document.getElementById('countSelectedDup');
+
+        function updateCount() {
+            const checked = document.querySelectorAll('.dup-check:checked').length;
+            if (countSpan) countSpan.textContent = checked;
+            if (btnBulk) btnBulk.style.display = checked > 0 ? 'inline-block' : 'none';
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                document.querySelectorAll('.dup-check').forEach(cb => cb.checked = this.checked);
+                updateCount();
+            });
+        }
+
+        document.querySelectorAll('.dup-check').forEach(cb => cb.addEventListener('change', updateCount));
+    })();
+</script>
+}

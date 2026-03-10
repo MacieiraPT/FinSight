@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using GestaoDespesas.Data;
 using GestaoDespesas.Models;
+using GestaoDespesas.Services;
 
 namespace GestaoDespesas.Controllers
 {
@@ -19,11 +20,13 @@ namespace GestaoDespesas.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly AuditoriaService _auditoria;
 
-        public DespesasController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public DespesasController(ApplicationDbContext context, UserManager<IdentityUser> userManager, AuditoriaService auditoria)
         {
             _context = context;
             _userManager = userManager;
+            _auditoria = auditoria;
         }
 
         // GET: Despesas
@@ -156,6 +159,8 @@ namespace GestaoDespesas.Controllers
                 _context.Add(despesa);
                 await _context.SaveChangesAsync();
 
+                await _auditoria.RegistarAsync(userId!, "Despesa", despesa.DespesaId, "Criar", $"Criada: {despesa.Descricao} - {despesa.Valor:C}");
+
                 TempData["ToastSuccess"] = "Despesa criada com sucesso!";
                 return RedirectToAction(nameof(Index));
             }
@@ -226,6 +231,8 @@ namespace GestaoDespesas.Controllers
                     despesaDb.Observacoes = despesa.Observacoes;
 
                     await _context.SaveChangesAsync();
+
+                    await _auditoria.RegistarAsync(userId!, "Despesa", id, "Editar", $"Editada: {despesa.Descricao}");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -275,8 +282,11 @@ namespace GestaoDespesas.Controllers
 
             if (despesa == null) return NotFound();
 
+            var descricao = despesa.Descricao;
             _context.Despesas.Remove(despesa);
             await _context.SaveChangesAsync();
+
+            await _auditoria.RegistarAsync(userId!, "Despesa", id, "Eliminar", $"Eliminada: {descricao}");
 
             TempData["ToastSuccess"] = "Despesa eliminada com sucesso!";
             return RedirectToAction(nameof(Index));
@@ -385,6 +395,49 @@ namespace GestaoDespesas.Controllers
                 query = query.Where(d => d.Descricao.Contains(q));
 
             return query.OrderByDescending(d => d.Data);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EliminarSelecionadas([FromForm] int[] ids)
+        {
+            if (ids == null || ids.Length == 0)
+            {
+                TempData["ToastWarning"] = "Nenhuma despesa selecionada.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var userId = _userManager.GetUserId(User);
+
+            var despesas = await _context.Despesas
+                .Where(d => ids.Contains(d.DespesaId) && d.UserId == userId)
+                .ToListAsync();
+
+            _context.Despesas.RemoveRange(despesas);
+            await _context.SaveChangesAsync();
+
+            TempData["ToastSuccess"] = $"{despesas.Count} despesa(s) eliminada(s) com sucesso!";
+            return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> Duplicados()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var despesas = await _context.Despesas
+                .Include(d => d.Categoria)
+                .Where(d => d.UserId == userId)
+                .OrderByDescending(d => d.Data)
+                .ToListAsync();
+
+            var duplicados = despesas
+                .GroupBy(d => new { d.Valor, Data = d.Data.Date, d.CategoriaId })
+                .Where(g => g.Count() > 1)
+                .SelectMany(g => g)
+                .ToList();
+
+            ViewBag.TotalDuplicados = duplicados.Count;
+            return View(duplicados);
         }
 
         private bool DespesaExists(int id, string userId)
