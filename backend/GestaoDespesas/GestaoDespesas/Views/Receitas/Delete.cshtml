@@ -1,0 +1,25 @@
+@model GestaoDespesas.Models.Receita
+
+@{
+    ViewData["Title"] = "Eliminar receita";
+}
+
+<div class="card border-danger shadow-sm">
+    <div class="card-body">
+        <p>Tens a certeza que queres eliminar esta receita?</p>
+
+        <div class="fw-semibold mb-2">
+            @Model.Descricao
+        </div>
+
+        <div class="text-muted mb-3">
+            @Model.Data.ToString("dd/MM/yyyy") — @Model.Valor.ToString("C") — @Model.Tipo
+        </div>
+
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="ReceitaId" />
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>

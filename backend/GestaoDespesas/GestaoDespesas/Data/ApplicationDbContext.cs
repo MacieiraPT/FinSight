@@ -54,6 +54,10 @@ namespace GestaoDespesas.Data
             builder.Entity<UserProfile>()
                 .Property(p => p.SalarioMensal)
                 .HasPrecision(18, 2);
+
+            builder.Entity<Receita>()
+                .Property(r => r.Valor)
+                .HasPrecision(18, 2);
         }
 
         public override int SaveChanges()
@@ -121,6 +125,7 @@ namespace GestaoDespesas.Data
         public DbSet<Categoria> Categorias => Set<Categoria>();
         public DbSet<Despesa> Despesas => Set<Despesa>();
         public DbSet<Orcamento> Orcamentos => Set<Orcamento>();
+        public DbSet<Receita> Receitas => Set<Receita>();
         public DbSet<UserProfile> UserProfiles { get; set; }
     }
 }

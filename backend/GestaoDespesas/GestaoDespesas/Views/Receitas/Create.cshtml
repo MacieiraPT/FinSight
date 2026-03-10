@@ -1,0 +1,51 @@
+@model GestaoDespesas.Models.Receita
+
+@{
+    ViewData["Title"] = "Nova receita";
+    var tipos = (string[])ViewBag.Tipos;
+}
+
+<div class="text-muted mb-4">Regista uma nova receita.</div>
+
+<div class="row">
+    <div class="col-md-6 col-lg-5">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Descricao" class="form-label"></label>
+                <input asp-for="Descricao" class="form-control" />
+                <span asp-validation-for="Descricao" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Valor" class="form-label"></label>
+                <input asp-for="Valor" class="form-control" />
+                <span asp-validation-for="Valor" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Data" class="form-label"></label>
+                <input asp-for="Data" type="date" class="form-control" asp-format="{0:yyyy-MM-dd}" />
+                <span asp-validation-for="Data" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Tipo" class="form-label"></label>
+                <select asp-for="Tipo" class="form-select">
+                    <option value="">— Seleciona —</option>
+                    @foreach (var tipo in tipos)
+                    {
+                        <option value="@tipo">@tipo</option>
+                    }
+                </select>
+                <span asp-validation-for="Tipo" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

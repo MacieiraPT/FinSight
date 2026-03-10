@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -32,17 +32,29 @@ public class DashboardController : Controller
 
         var totalMes = despesasMes.Sum(d => d.Valor);
 
+        // Receitas do mês atual
+        var receitasMes = await _context.Receitas
+            .Where(r => r.UserId == userId &&
+                        r.Data >= inicioMes &&
+                        r.Data < fimMes)
+            .ToListAsync();
+
+        var totalReceitasMes = receitasMes.Sum(r => r.Valor);
+        var saldoMes = totalReceitasMes - totalMes;
+
         var profile = await _context.UserProfiles
             .FirstOrDefaultAsync(p => p.UserId == userId);
 
+        // Alertas baseados nas receitas reais do mês (se houver), senão no salário configurado
+        decimal receitaBase = totalReceitasMes > 0 ? totalReceitasMes : (profile?.SalarioMensal ?? 0);
         decimal limitePermitido = 0;
         decimal percentagemUsada = 0;
         bool alerta = false;
         bool alertaGrave = false;
 
-        if (profile != null && profile.SalarioMensal > 0)
+        if (receitaBase > 0 && profile != null)
         {
-            limitePermitido = profile.SalarioMensal * profile.LimitePercentual / 100m;
+            limitePermitido = receitaBase * profile.LimitePercentual / 100m;
             percentagemUsada = limitePermitido > 0
                 ? (totalMes / limitePermitido) * 100
                 : 0;
@@ -78,16 +90,23 @@ public class DashboardController : Controller
                         d.Data >= seisMeses.First())
             .ToListAsync();
 
+        var receitas6Meses = await _context.Receitas
+            .Where(r => r.UserId == userId &&
+                        r.Data >= seisMeses.First())
+            .ToListAsync();
+
         var dados6Meses = seisMeses.Select(m => new
         {
             Mes = m.ToString("MMM yyyy"),
             Total = despesas6Meses
                 .Where(d => d.Data.Month == m.Month && d.Data.Year == m.Year)
-                .Sum(d => d.Valor)
+                .Sum(d => d.Valor),
+            TotalReceitas = receitas6Meses
+                .Where(r => r.Data.Month == m.Month && r.Data.Year == m.Year)
+                .Sum(r => r.Valor)
         }).ToList();
 
         // Orçamentos do mês
-        // Buscar orçamentos com categorias
         var orcamentos = await _context.Orcamentos
             .Include(o => o.Categoria)
             .Where(o => o.UserId == userId &&
@@ -95,7 +114,6 @@ public class DashboardController : Controller
                         o.Ano == now.Year)
             .ToListAsync();
 
-        // Agora calcular em memória
         var progressoOrcamentos = orcamentos
             .Where(o => o.Categoria != null)
             .Select(o => new
@@ -109,6 +127,8 @@ public class DashboardController : Controller
             .ToList();
 
         ViewBag.TotalMes = totalMes;
+        ViewBag.TotalReceitasMes = totalReceitasMes;
+        ViewBag.SaldoMes = saldoMes;
         ViewBag.Categorias = porCategoria;
         ViewBag.SeisMeses = dados6Meses;
         ViewBag.Progresso = progressoOrcamentos;
@@ -116,6 +136,7 @@ public class DashboardController : Controller
         ViewBag.PercentagemUsada = percentagemUsada;
         ViewBag.Alerta = alerta;
         ViewBag.AlertaGrave = alertaGrave;
+        ViewBag.UsaReceitasReais = totalReceitasMes > 0;
 
         return View();
     }
