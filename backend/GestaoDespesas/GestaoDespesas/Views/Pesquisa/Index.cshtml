@@ -1,0 +1,118 @@
+@using GestaoDespesas.Models
+@{
+    ViewData["Title"] = "Pesquisa Global";
+}
+
+<div class="mb-4">
+    <div class="text-muted">Pesquisa em despesas, receitas e categorias.</div>
+</div>
+
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" value="@ViewBag.Q" class="form-control form-control-lg"
+                   placeholder="Pesquisar em tudo..." autofocus />
+        </div>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary btn-lg w-100">Pesquisar</button>
+    </div>
+</form>
+
+@if (ViewBag.Q != null && ViewBag.TotalResultados != null)
+{
+    <p class="text-muted mb-3">
+        <strong>@ViewBag.TotalResultados</strong> resultado(s) para "<strong>@ViewBag.Q</strong>"
+    </p>
+
+    @if (ViewBag.Despesas != null && ((IEnumerable<Despesa>)ViewBag.Despesas).Any())
+    {
+        <div class="card shadow-sm border-0 p-4 mb-3">
+            <h6 class="mb-3"><i class="bi bi-receipt me-1"></i> Despesas</h6>
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Data</th>
+                        <th class="text-end">Valor</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in (IEnumerable<Despesa>)ViewBag.Despesas)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@d.Descricao</td>
+                            <td>@d.Categoria?.Nome</td>
+                            <td>@d.Data.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end fw-semibold">@d.Valor.ToString("C")</td>
+                            <td class="text-end">
+                                <a asp-controller="Despesas" asp-action="Details" asp-route-id="@d.DespesaId"
+                                   class="btn btn-sm btn-outline-secondary">Ver</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (ViewBag.Receitas != null && ((IEnumerable<Receita>)ViewBag.Receitas).Any())
+    {
+        <div class="card shadow-sm border-0 p-4 mb-3">
+            <h6 class="mb-3"><i class="bi bi-wallet2 me-1"></i> Receitas</h6>
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Tipo</th>
+                        <th>Data</th>
+                        <th class="text-end">Valor</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in (IEnumerable<Receita>)ViewBag.Receitas)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@r.Descricao</td>
+                            <td>@r.Tipo</td>
+                            <td>@r.Data.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end fw-semibold">@r.Valor.ToString("C")</td>
+                            <td class="text-end">
+                                <a asp-controller="Receitas" asp-action="Details" asp-route-id="@r.ReceitaId"
+                                   class="btn btn-sm btn-outline-secondary">Ver</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (ViewBag.Categorias != null && ((IEnumerable<Categoria>)ViewBag.Categorias).Any())
+    {
+        <div class="card shadow-sm border-0 p-4 mb-3">
+            <h6 class="mb-3"><i class="bi bi-tags me-1"></i> Categorias</h6>
+            <ul class="list-group list-group-flush">
+                @foreach (var c in (IEnumerable<Categoria>)ViewBag.Categorias)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">@c.Nome</span>
+                        <a asp-controller="Categorias" asp-action="Details" asp-route-id="@c.CategoriaId"
+                           class="btn btn-sm btn-outline-secondary">Ver</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (ViewBag.TotalResultados == 0)
+    {
+        <div class="alert alert-info">
+            Nenhum resultado encontrado para "<strong>@ViewBag.Q</strong>".
+        </div>
+    }
+}

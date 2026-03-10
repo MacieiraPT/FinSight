@@ -9,9 +9,19 @@
         <div class="text-muted">Define limites mensais por categoria.</div>
     </div>
 
-    <a asp-action="Create" class="btn btn-primary">
-        Novo orçamento
-    </a>
+    <div class="d-flex align-items-center gap-2">
+        <a asp-action="Create" class="btn btn-primary">
+            Novo orçamento
+        </a>
+        <form asp-action="CopiarMesAnterior" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-secondary"
+                    title="Copiar os orçamentos do mês anterior para o mês atual">
+                <i class="bi bi-clipboard-check me-1"></i>
+                Copiar mês anterior
+            </button>
+        </form>
+    </div>
 </div>
 
 @if (!Model.Any())

@@ -1,0 +1,73 @@
+@model IEnumerable<GestaoDespesas.Models.RegistoAuditoria>
+
+@{
+    ViewData["Title"] = "Registo de Auditoria";
+}
+
+<div class="mb-4">
+    <div class="text-muted">Histórico de alterações às tuas finanças.</div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Ainda não existem registos de auditoria.
+    </div>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Data/Hora</th>
+                <th>Entidade</th>
+                <th>Ação</th>
+                <th>Detalhes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.DataHora.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        <span class="badge bg-light text-dark">@r.Entidade</span>
+                    </td>
+                    <td>
+                        @{
+                            var badgeClass = r.Acao switch
+                            {
+                                "Criar" => "bg-success",
+                                "Editar" => "bg-warning text-dark",
+                                "Eliminar" => "bg-danger",
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @badgeClass">@r.Acao</span>
+                    </td>
+                    <td class="text-muted">@r.Detalhes</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (ViewBag.TotalPages > 1)
+{
+    <nav class="mt-4 d-flex justify-content-center">
+        <ul class="pagination">
+            <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)">Anterior</a>
+            </li>
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                </li>
+            }
+            <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)">Próximo</a>
+            </li>
+        </ul>
+    </nav>
+}

@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using GestaoDespesas.Data;
+using GestaoDespesas.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,9 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<AuditoriaService>();
+builder.Services.AddScoped<DespesasRecorrentesService>();
 
 builder.Services.AddControllersWithViews();
 
@@ -96,6 +100,10 @@ using (var scope = app.Services.CreateScope())
 
     // 👉 AGORA criar Categorias / Despesas / Orçamentos
     await SeedTestData.SeedAsync(context, userManager, config);
+
+    // Processar despesas recorrentes pendentes
+    var recorrentesService = new DespesasRecorrentesService(context);
+    await recorrentesService.ProcessarRecorrentesAsync();
 }
 
 // Configure the HTTP request pipeline.

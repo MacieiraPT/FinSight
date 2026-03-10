@@ -13,6 +13,40 @@
         <a asp-action="Create" class="btn btn-primary">
             Nova receita
         </a>
+
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                <i class="bi bi-download me-1"></i>
+                Exportar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3">
+                <li>
+                    <form asp-action="ExportarCsv" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ano" value="@Context.Request.Query["ano"]" />
+                        <input type="hidden" name="mes" value="@Context.Request.Query["mes"]" />
+                        <input type="hidden" name="q" value="@Context.Request.Query["q"]" />
+                        <button type="submit" class="dropdown-item">
+                            <i class="bi bi-file-earmark-arrow-down me-2"></i> CSV
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form asp-action="ExportarExcel" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ano" value="@Context.Request.Query["ano"]" />
+                        <input type="hidden" name="mes" value="@Context.Request.Query["mes"]" />
+                        <input type="hidden" name="q" value="@Context.Request.Query["q"]" />
+                        <button type="submit" class="dropdown-item">
+                            <i class="bi bi-file-earmark-excel me-2"></i> Excel (.xlsx)
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
 

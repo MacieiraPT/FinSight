@@ -197,6 +197,56 @@ namespace GestaoDespesas.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CopiarMesAnterior()
+        {
+            var userId = _userManager.GetUserId(User);
+            var now = DateTime.UtcNow;
+
+            var mesAnterior = now.AddMonths(-1);
+
+            var orcamentosAnteriores = await _context.Orcamentos
+                .Where(o => o.UserId == userId && o.Ano == mesAnterior.Year && o.Mes == mesAnterior.Month)
+                .ToListAsync();
+
+            if (!orcamentosAnteriores.Any())
+            {
+                TempData["ToastWarning"] = "Não existem orçamentos no mês anterior para copiar.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var existentes = await _context.Orcamentos
+                .Where(o => o.UserId == userId && o.Ano == now.Year && o.Mes == now.Month)
+                .Select(o => o.CategoriaId)
+                .ToListAsync();
+
+            int copiados = 0;
+            foreach (var orc in orcamentosAnteriores)
+            {
+                if (!existentes.Contains(orc.CategoriaId))
+                {
+                    _context.Orcamentos.Add(new Orcamento
+                    {
+                        Ano = now.Year,
+                        Mes = now.Month,
+                        CategoriaId = orc.CategoriaId,
+                        Limite = orc.Limite,
+                        UserId = userId!
+                    });
+                    copiados++;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["ToastSuccess"] = copiados > 0
+                ? $"{copiados} orçamento(s) copiado(s) do mês anterior!"
+                : "Todos os orçamentos do mês anterior já existem para este mês.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
         private bool OrcamentoExists(int id, string userId)
         {
             return _context.Orcamentos.Any(e => e.OrcamentoId == id && e.UserId == userId);

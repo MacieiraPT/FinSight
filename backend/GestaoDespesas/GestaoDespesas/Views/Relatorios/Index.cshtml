@@ -1,0 +1,238 @@
+@using System.Globalization
+@{
+    ViewData["Title"] = "Relatórios";
+    var ptCulture = new CultureInfo("pt-PT");
+    var totalDespesas = (decimal)ViewBag.TotalDespesas;
+    var totalReceitas = (decimal)ViewBag.TotalReceitas;
+    var saldo = (decimal)ViewBag.Saldo;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="text-muted">Análise detalhada das tuas finanças por período.</div>
+    </div>
+</div>
+
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <label class="form-label">Data início</label>
+        <input type="date" name="dataInicio" value="@ViewBag.DataInicio" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Data fim</label>
+        <input type="date" name="dataFim" value="@ViewBag.DataFim" class="form-control" />
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Limpar</a>
+    </div>
+</form>
+
+<!-- Resumo -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-4 text-center">
+            <div class="text-muted mb-1">Total Receitas</div>
+            <div class="display-6 fw-bold text-success">@totalReceitas.ToString("C", ptCulture)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-4 text-center">
+            <div class="text-muted mb-1">Total Despesas</div>
+            <div class="display-6 fw-bold text-primary">@totalDespesas.ToString("C", ptCulture)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-4 text-center">
+            <div class="text-muted mb-1">Saldo</div>
+            <div class="display-6 fw-bold @(saldo >= 0 ? "text-success" : "text-danger")">
+                @saldo.ToString("C", ptCulture)
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tendência e Categorias -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 p-4 h-100">
+            <h5 class="mb-3">Tendência mensal</h5>
+            <div style="height:300px;"><canvas id="chartTendencia"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 p-4 h-100">
+            <h5 class="mb-3">Despesas por categoria</h5>
+            <div style="height:300px;"><canvas id="chartCategorias"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- Spending Trends (#6) -->
+@if (ViewBag.MediasCategoria != null && ((IEnumerable<dynamic>)ViewBag.MediasCategoria).Any())
+{
+    <div class="card shadow-sm border-0 p-4 mb-4">
+        <h5 class="mb-3">Tendência de gastos por categoria</h5>
+        <p class="text-muted small">Comparação entre o mês atual e a média mensal no período selecionado.</p>
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Categoria</th>
+                    <th class="text-end">Média mensal</th>
+                    <th class="text-end">Mês atual</th>
+                    <th class="text-end">Variação</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in ViewBag.MediasCategoria)
+                {
+                    <tr>
+                        <td class="fw-semibold">@m.Categoria</td>
+                        <td class="text-end">@((decimal)m.MediaMensal).ToString("C", ptCulture)</td>
+                        <td class="text-end">@((decimal)m.MesAtual).ToString("C", ptCulture)</td>
+                        <td class="text-end">
+                            @{
+                                var variacao = (decimal)m.Variacao;
+                            }
+                            <span class="@(variacao > 0 ? "text-danger" : variacao < 0 ? "text-success" : "")">
+                                @(variacao > 0 ? "+" : "")@variacao.ToString("0.0")%
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- Net Worth / Savings (#7) -->
+@if (ViewBag.PoupancaAcumulada != null && ((IEnumerable<dynamic>)ViewBag.PoupancaAcumulada).Any())
+{
+    <div class="card shadow-sm border-0 p-4 mb-4">
+        <h5 class="mb-3">Poupança acumulada</h5>
+        <p class="text-muted small">Receitas menos despesas ao longo do tempo.</p>
+        <div style="height:300px;"><canvas id="chartPoupanca"></canvas></div>
+    </div>
+}
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const chartColors = window.gdGetChartColors();
+    Chart.defaults.color = chartColors.text;
+    Chart.defaults.borderColor = chartColors.grid;
+
+    const tendencia = JSON.parse('@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Tendencia))');
+    const porCategoria = JSON.parse('@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PorCategoria))');
+    const poupanca = JSON.parse('@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PoupancaAcumulada))');
+
+    // Tendência
+    new Chart(document.getElementById('chartTendencia'), {
+        type: 'bar',
+        data: {
+            labels: tendencia.map(t => t.Mes),
+            datasets: [
+                {
+                    label: 'Receitas',
+                    data: tendencia.map(t => t.TotalReceitas),
+                    backgroundColor: 'rgba(16,185,129,0.7)',
+                },
+                {
+                    label: 'Despesas',
+                    data: tendencia.map(t => t.TotalDespesas),
+                    backgroundColor: 'rgba(99,102,241,0.7)',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: chartColors.text } },
+                tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.text, bodyColor: chartColors.text }
+            },
+            scales: {
+                x: { ticks: { color: chartColors.text }, grid: { color: chartColors.grid } },
+                y: { ticks: { color: chartColors.text }, grid: { color: chartColors.grid } }
+            }
+        }
+    });
+
+    // Categorias
+    function gerarCores(n) {
+        const cores = [];
+        for (let i = 0; i < n; i++) { cores.push(`hsl(${Math.floor((360 / n) * i)}, 65%, 60%)`); }
+        return cores;
+    }
+
+    new Chart(document.getElementById('chartCategorias'), {
+        type: 'doughnut',
+        data: {
+            labels: porCategoria.map(c => c.Categoria),
+            datasets: [{
+                data: porCategoria.map(c => c.Total),
+                backgroundColor: gerarCores(porCategoria.length),
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: { position: 'bottom', labels: { color: chartColors.text, usePointStyle: true, padding: 12 } },
+                tooltip: {
+                    backgroundColor: chartColors.tooltipBg,
+                    titleColor: chartColors.text,
+                    bodyColor: chartColors.text,
+                    callbacks: {
+                        label: function(ctx) {
+                            const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                            return `${ctx.label}: ${ctx.parsed.toLocaleString('pt-PT', {style:'currency', currency:'EUR'})} (${((ctx.parsed/total)*100).toFixed(1)}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Poupança acumulada
+    if (poupanca.length > 0) {
+        new Chart(document.getElementById('chartPoupanca'), {
+            type: 'line',
+            data: {
+                labels: poupanca.map(p => p.Mes),
+                datasets: [{
+                    label: 'Poupança acumulada',
+                    data: poupanca.map(p => p.Acumulado),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: chartColors.text } },
+                    tooltip: {
+                        backgroundColor: chartColors.tooltipBg,
+                        titleColor: chartColors.text,
+                        bodyColor: chartColors.text,
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.parsed.y.toLocaleString('pt-PT', {style:'currency', currency:'EUR'});
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: chartColors.text }, grid: { color: chartColors.grid } },
+                    y: { ticks: { color: chartColors.text }, grid: { color: chartColors.grid } }
+                }
+            }
+        });
+    }
+</script>
+}

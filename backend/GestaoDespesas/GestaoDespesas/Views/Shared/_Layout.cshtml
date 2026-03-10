@@ -47,11 +47,23 @@
                 <a class="nav-item" asp-controller="Despesas" asp-action="Index">
                     <i class="bi bi-receipt nav-ico"></i> <span>Despesas</span>
                 </a>
+                <a class="nav-item" asp-controller="DespesasRecorrentes" asp-action="Index">
+                    <i class="bi bi-arrow-repeat nav-ico"></i> <span>Recorrentes</span>
+                </a>
                 <a class="nav-item" asp-controller="Orcamentos" asp-action="Index">
                     <i class="bi bi-bullseye nav-ico"></i> <span>Orçamentos</span>
                 </a>
                 <a class="nav-item" asp-controller="Categorias" asp-action="Index">
                     <i class="bi bi-tags nav-ico"></i> <span>Categorias</span>
+                </a>
+                <a class="nav-item" asp-controller="Relatorios" asp-action="Index">
+                    <i class="bi bi-graph-up nav-ico"></i> <span>Relatórios</span>
+                </a>
+                <a class="nav-item" asp-controller="Pesquisa" asp-action="Index">
+                    <i class="bi bi-search nav-ico"></i> <span>Pesquisa</span>
+                </a>
+                <a class="nav-item" asp-controller="Auditoria" asp-action="Index">
+                    <i class="bi bi-clock-history nav-ico"></i> <span>Auditoria</span>
                 </a>
                 <a asp-area="Identity" asp-page="/Account/Manage/FinancialSettings" class="nav-item @(Context.Request.Path.StartsWithSegments("/Identity/Account/Manage") ? "active" : "")">
                     <i class="bi bi-gear nav-ico"></i> <span>Configurações</span>
