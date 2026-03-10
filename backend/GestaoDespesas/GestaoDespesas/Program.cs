@@ -44,6 +44,18 @@ builder.Services.AddAuthentication()
 
 var app = builder.Build();
 
+// Force HTTPS port if not specified
+if (!app.Environment.IsProduction())
+{
+    var env = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+    if (string.IsNullOrEmpty(env))
+    {
+        app.Urls.Clear();
+        app.Urls.Add("https://localhost:7093");
+        app.Urls.Add("http://localhost:5067");
+    }
+}
+
 var locOptions = app.Services.GetRequiredService<
     Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
 
