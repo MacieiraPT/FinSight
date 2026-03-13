@@ -67,6 +67,12 @@ namespace GestaoDespesas.Controllers
         {
             var userId = _userManager.GetUserId(User);
 
+            var categoriaOk = await _context.Categorias.AnyAsync(c => c.CategoriaId == despesa.CategoriaId && c.UserId == userId);
+            if (!categoriaOk)
+            {
+                ModelState.AddModelError("CategoriaId", "Categoria inválida.");
+            }
+
             if (ModelState.IsValid)
             {
                 despesa.UserId = userId;
@@ -114,6 +120,12 @@ namespace GestaoDespesas.Controllers
                 .FirstOrDefaultAsync(d => d.DespesaRecorrenteId == id && d.UserId == userId);
 
             if (despesaDb == null) return NotFound();
+
+            var categoriaOk = await _context.Categorias.AnyAsync(c => c.CategoriaId == despesa.CategoriaId && c.UserId == userId);
+            if (!categoriaOk)
+            {
+                ModelState.AddModelError("CategoriaId", "Categoria inválida.");
+            }
 
             if (ModelState.IsValid)
             {

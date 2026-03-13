@@ -20,6 +20,7 @@ public class DespesaRecorrente
     public int CategoriaId { get; set; }
     public Categoria? Categoria { get; set; }
 
+    [StringLength(500)]
     public string? Observacoes { get; set; }
 
     [Required(ErrorMessage = "A frequência é obrigatória.")]

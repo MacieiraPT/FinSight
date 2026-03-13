@@ -116,7 +116,7 @@ namespace GestaoDespesas.Controllers
         {
             var userId = _userManager.GetUserId(User);
 
-            if (receita.Data > DateTime.Today)
+            if (receita.Data > DateTime.UtcNow.Date)
             {
                 ModelState.AddModelError("Data", "A data não pode ser futura.");
             }
@@ -167,7 +167,7 @@ namespace GestaoDespesas.Controllers
 
             if (receitaDb == null) return NotFound();
 
-            if (receita.Data > DateTime.Today)
+            if (receita.Data > DateTime.UtcNow.Date)
             {
                 ModelState.AddModelError("Data", "A data não pode ser futura.");
             }
@@ -245,8 +245,8 @@ namespace GestaoDespesas.Controllers
             foreach (var r in receitas)
             {
                 sb.AppendLine(
-                    $"{r.Descricao};" +
-                    $"{r.Tipo};" +
+                    $"{SanitizeCsvField(r.Descricao)};" +
+                    $"{SanitizeCsvField(r.Tipo)};" +
                     $"{r.Data:dd/MM/yyyy};" +
                     $"{r.Valor.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
                 );
@@ -294,6 +294,14 @@ namespace GestaoDespesas.Controllers
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"receitas_filtradas_{DateTime.Now:yyyyMMdd}.xlsx"
             );
+        }
+
+        private static string SanitizeCsvField(string? value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            if (value.StartsWith('=') || value.StartsWith('+') || value.StartsWith('-') || value.StartsWith('@') || value.StartsWith('\t') || value.StartsWith('\r') || value.StartsWith('\n'))
+                return "'" + value;
+            return value;
         }
 
         private IQueryable<Receita> GetReceitasFiltradas(string userId, int? ano, int? mes, string? q)

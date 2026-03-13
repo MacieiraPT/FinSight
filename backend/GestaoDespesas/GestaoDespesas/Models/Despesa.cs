@@ -22,6 +22,7 @@ public class Despesa
     public int CategoriaId { get; set; }
     public Categoria? Categoria { get; set; }
 
+    [StringLength(500)]
     public string? Observacoes { get; set; }
 
     [ScaffoldColumn(false)]

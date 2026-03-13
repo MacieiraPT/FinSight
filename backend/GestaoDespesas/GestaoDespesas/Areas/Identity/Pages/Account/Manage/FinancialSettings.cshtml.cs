@@ -1,4 +1,5 @@
 #nullable disable
+using System.ComponentModel.DataAnnotations;
 using GestaoDespesas.Data;
 using GestaoDespesas.Models;
 using Microsoft.AspNetCore.Identity;
@@ -26,8 +27,12 @@ namespace GestaoDespesas.Areas.Identity.Pages.Account.Manage
 
         public class InputModel
         {
+            [Range(0, 99999999, ErrorMessage = "O salário deve ser entre 0 e 99 999 999.")]
             public decimal SalarioMensal { get; set; }
+
+            [Range(1, 100, ErrorMessage = "O limite deve ser entre 1% e 100%.")]
             public int LimitePercentual { get; set; }
+
             public bool ReceberAlertas { get; set; }
         }
 
