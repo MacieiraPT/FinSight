@@ -88,8 +88,8 @@
                 {
                     <tr>
                         <td class="fw-semibold">@m.Categoria</td>
-                        <td class="text-end">@((decimal)m.MediaMensal).ToString("C", ptCulture)</td>
-                        <td class="text-end">@((decimal)m.MesAtual).ToString("C", ptCulture)</td>
+                        <td class="text-end">@(((decimal)m.MediaMensal).ToString("C", ptCulture))</td>
+                        <td class="text-end">@(((decimal)m.MesAtual).ToString("C", ptCulture))</td>
                         <td class="text-end">
                             @{
                                 var variacao = (decimal)m.Variacao;
