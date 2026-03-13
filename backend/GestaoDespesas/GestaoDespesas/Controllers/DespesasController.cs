@@ -147,7 +147,7 @@ namespace GestaoDespesas.Controllers
                 ModelState.AddModelError("CategoriaId", "Categoria inválida.");
             }
 
-            if (despesa.Data > DateTime.Today)
+            if (despesa.Data > DateTime.UtcNow.Date)
             {
                 ModelState.AddModelError("Data", "A data não pode ser futura.");
             }
@@ -214,7 +214,13 @@ namespace GestaoDespesas.Controllers
 
             if (despesaDb == null) return NotFound();
 
-            if (despesa.Data > DateTime.Today)
+            var categoriaOk = await _context.Categorias.AnyAsync(c => c.CategoriaId == despesa.CategoriaId && c.UserId == userId);
+            if (!categoriaOk)
+            {
+                ModelState.AddModelError("CategoriaId", "Categoria inválida.");
+            }
+
+            if (despesa.Data > DateTime.UtcNow.Date)
             {
                 ModelState.AddModelError("Data", "A data não pode ser futura.");
             }
@@ -312,11 +318,11 @@ namespace GestaoDespesas.Controllers
             foreach (var d in despesas)
             {
                 builder.AppendLine(
-                    $"{d.Descricao};" +
-                    $"{d.Categoria?.Nome};" +
+                    $"{SanitizeCsvField(d.Descricao)};" +
+                    $"{SanitizeCsvField(d.Categoria?.Nome)};" +
                     $"{d.Data:dd/MM/yyyy};" +
                     $"{d.Valor.ToString(System.Globalization.CultureInfo.InvariantCulture)};" +
-                    $"{d.Observacoes}"
+                    $"{SanitizeCsvField(d.Observacoes)}"
                 );
             }
 
@@ -438,6 +444,14 @@ namespace GestaoDespesas.Controllers
 
             ViewBag.TotalDuplicados = duplicados.Count;
             return View(duplicados);
+        }
+
+        private static string SanitizeCsvField(string? value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            if (value.StartsWith('=') || value.StartsWith('+') || value.StartsWith('-') || value.StartsWith('@') || value.StartsWith('\t') || value.StartsWith('\r') || value.StartsWith('\n'))
+                return "'" + value;
+            return value;
         }
 
         private bool DespesaExists(int id, string userId)

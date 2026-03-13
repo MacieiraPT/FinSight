@@ -194,7 +194,7 @@ namespace GestaoDespesas.Controllers
                 .FirstOrDefaultAsync(c => c.CategoriaId == id && c.UserId == userId);
 
             var temDespesas = await _context.Despesas
-                .AnyAsync(d => d.CategoriaId == id);
+                .AnyAsync(d => d.CategoriaId == id && d.UserId == userId);
 
             if (categoria == null)
                 return NotFound();
