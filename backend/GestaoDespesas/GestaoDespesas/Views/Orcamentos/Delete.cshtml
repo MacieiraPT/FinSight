@@ -1,43 +1,31 @@
-﻿@model GestaoDespesas.Models.Orcamento
+@model GestaoDespesas.Models.Orcamento
 
 @{
     ViewData["Title"] = "Eliminar orçamento";
 }
 
-<h3>Tens a certeza que queres eliminar este orçamento?</h3>
-<div>
-    <h4>Orcamento</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Ano)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Ano)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Mes)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Mes)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Categoria)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Categoria.Nome)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Limite)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Limite)
-        </dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="OrcamentoId" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+<div class="card border-danger shadow-sm">
+    <div class="card-body">
+        <p>Tens a certeza que queres eliminar este orçamento?</p>
+
+        <dl class="row mb-3">
+            <dt class="col-sm-3 text-muted">Categoria</dt>
+            <dd class="col-sm-9">@Model.Categoria?.Nome</dd>
+
+            <dt class="col-sm-3 text-muted">Mês</dt>
+            <dd class="col-sm-9">
+                @(new System.Globalization.CultureInfo("pt-PT").DateTimeFormat.GetMonthName(Model.Mes))
+                @Model.Ano
+            </dd>
+
+            <dt class="col-sm-3 text-muted">Limite</dt>
+            <dd class="col-sm-9">@Model.Limite.ToString("C")</dd>
+        </dl>
+
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="OrcamentoId" />
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+    </div>
 </div>
