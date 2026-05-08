@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "Erro";
+    var code = ViewBag.StatusCode as int? ?? 500;
+}
+<div class="container py-5 text-center">
+    <h1 class="display-1 fw-bold text-primary">@code</h1>
+    @if (code == 404)
+    {
+        <p class="lead">A página que procuras não foi encontrada.</p>
+    }
+    else if (code == 403)
+    {
+        <p class="lead">Não tens permissão para aceder a este recurso.</p>
+    }
+    else
+    {
+        <p class="lead">Ocorreu um erro inesperado. A nossa equipa foi notificada.</p>
+    }
+    <a class="btn btn-primary mt-3" asp-controller="Dashboard" asp-action="Index">Voltar ao Dashboard</a>
+</div>

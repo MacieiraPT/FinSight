@@ -1,0 +1,26 @@
+@model FinSightPro.Application.DTOs.ExpenseDto
+@{
+    ViewData["Title"] = "Detalhes da Despesa";
+    var pt = new System.Globalization.CultureInfo("pt-PT");
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <h1 class="h4 mb-3">@Model.Description</h1>
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Valor</dt><dd class="col-sm-9">@Model.Amount.ToString("C", pt)</dd>
+            <dt class="col-sm-3">Data</dt><dd class="col-sm-9">@Model.Date.ToString("yyyy-MM-dd")</dd>
+            <dt class="col-sm-3">Categoria</dt><dd class="col-sm-9"><i class="fa-solid @(Model.CategoryIcon ?? "fa-tag")" style="color:@(Model.CategoryColor ?? "#6c757d")"></i> @Model.CategoryName</dd>
+            <dt class="col-sm-3">Método</dt><dd class="col-sm-9">@Model.PaymentMethod</dd>
+            <dt class="col-sm-3">Notas</dt><dd class="col-sm-9">@(string.IsNullOrEmpty(Model.Notes) ? "—" : Model.Notes)</dd>
+            @if (!string.IsNullOrEmpty(Model.AttachmentPath))
+            {
+                <dt class="col-sm-3">Comprovativo</dt><dd class="col-sm-9"><a href="@Model.AttachmentPath" target="_blank"><i class="fa-solid fa-paperclip"></i> Abrir</a></dd>
+            }
+        </dl>
+    </div>
+    <div class="card-footer bg-transparent d-flex justify-content-end gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Editar</a>
+    </div>
+</div>

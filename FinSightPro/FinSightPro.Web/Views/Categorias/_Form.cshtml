@@ -1,0 +1,27 @@
+@model FinSightPro.Web.ViewModels.CategoryFormViewModel
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Icon" class="form-label"></label>
+        <input asp-for="Icon" class="form-control" placeholder="fa-utensils" />
+        <small class="text-muted">Nome FontAwesome (ex: fa-house).</small>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Color" class="form-label"></label>
+        <input asp-for="Color" type="color" class="form-control form-control-color" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ParentCategoryId" class="form-label"></label>
+        <select asp-for="ParentCategoryId" class="form-select">
+            <option value="">— sem pai —</option>
+            @foreach (var c in Model.AvailableParents)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+        </select>
+    </div>
+</div>
