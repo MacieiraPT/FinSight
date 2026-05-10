@@ -68,6 +68,116 @@
     </div>
 </div>
 
+<!-- Comparação entre meses -->
+<div class="card shadow-sm border-0 p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+        <h5 class="mb-0">Comparação entre meses</h5>
+        <form method="get" class="d-flex gap-2">
+            @if (ViewBag.DataInicio != null) { <input type="hidden" name="dataInicio" value="@ViewBag.DataInicio" /> }
+            @if (ViewBag.DataFim != null) { <input type="hidden" name="dataFim" value="@ViewBag.DataFim" /> }
+            <input type="number" name="compareYear" value="@ViewBag.CompYear" min="2000" max="2100" class="form-control form-control-sm" style="width:6rem" />
+            <select name="compareMonth" class="form-select form-select-sm" style="width:9rem">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    var mn = ptCulture.DateTimeFormat.GetMonthName(m);
+                    if ((int)ViewBag.CompMonth == m)
+                    {
+                        <option value="@m" selected>@mn</option>
+                    }
+                    else
+                    {
+                        <option value="@m">@mn</option>
+                    }
+                }
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">Comparar</button>
+        </form>
+    </div>
+
+    <p class="text-muted small">A comparar <strong>@ViewBag.CompMesAtualLabel</strong> com <strong>@ViewBag.CompMesAnteriorLabel</strong>.</p>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th class="text-end">@ViewBag.CompMesAnteriorLabel</th>
+                    <th class="text-end">@ViewBag.CompMesAtualLabel</th>
+                    <th class="text-end">Variação</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var receitasAtual = (decimal)ViewBag.CompReceitasAtual;
+                    var receitasAnterior = (decimal)ViewBag.CompReceitasAnterior;
+                    var receitasVar = (decimal)ViewBag.CompReceitasVar;
+                    var despesasAtual = (decimal)ViewBag.CompDespesasAtual;
+                    var despesasAnterior = (decimal)ViewBag.CompDespesasAnterior;
+                    var despesasVar = (decimal)ViewBag.CompDespesasVar;
+                    var saldoAtual = (decimal)ViewBag.CompSaldoAtual;
+                    var saldoAnterior = (decimal)ViewBag.CompSaldoAnterior;
+                }
+                <tr>
+                    <td>Receitas</td>
+                    <td class="text-end">@receitasAnterior.ToString("C", ptCulture)</td>
+                    <td class="text-end fw-semibold">@receitasAtual.ToString("C", ptCulture)</td>
+                    <td class="text-end @(receitasVar >= 0 ? "text-success" : "text-danger")">
+                        @(receitasVar >= 0 ? "+" : "")@receitasVar.ToString("0.0")%
+                    </td>
+                </tr>
+                <tr>
+                    <td>Despesas</td>
+                    <td class="text-end">@despesasAnterior.ToString("C", ptCulture)</td>
+                    <td class="text-end fw-semibold">@despesasAtual.ToString("C", ptCulture)</td>
+                    <td class="text-end @(despesasVar <= 0 ? "text-success" : "text-danger")">
+                        @(despesasVar >= 0 ? "+" : "")@despesasVar.ToString("0.0")%
+                    </td>
+                </tr>
+                <tr class="fw-bold">
+                    <td>Saldo</td>
+                    <td class="text-end">@saldoAnterior.ToString("C", ptCulture)</td>
+                    <td class="text-end @(saldoAtual >= 0 ? "text-success" : "text-danger")">@saldoAtual.ToString("C", ptCulture)</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    @if (ViewBag.CompPorCategoria != null && ((IEnumerable<dynamic>)ViewBag.CompPorCategoria).Any())
+    {
+        <h6 class="mt-3 mb-2">Por categoria</h6>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Categoria</th>
+                        <th class="text-end">@ViewBag.CompMesAnteriorLabel</th>
+                        <th class="text-end">@ViewBag.CompMesAtualLabel</th>
+                        <th class="text-end">Variação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in ViewBag.CompPorCategoria)
+                    {
+                        var v = (decimal)c.Variacao;
+                        <tr>
+                            <td>
+                                <span class="cat-chip-sm me-2" style="background-color:@c.Cor"><i class="bi @c.Icone"></i></span>
+                                @c.Categoria
+                            </td>
+                            <td class="text-end">@(((decimal)c.Anterior).ToString("C", ptCulture))</td>
+                            <td class="text-end fw-semibold">@(((decimal)c.Atual).ToString("C", ptCulture))</td>
+                            <td class="text-end @(v <= 0 ? "text-success" : "text-danger")">
+                                @(v >= 0 ? "+" : "")@v.ToString("0.0")%
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
 <!-- Spending Trends (#6) -->
 @if (ViewBag.MediasCategoria != null && ((IEnumerable<dynamic>)ViewBag.MediasCategoria).Any())
 {

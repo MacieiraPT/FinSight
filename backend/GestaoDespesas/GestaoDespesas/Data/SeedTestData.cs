@@ -22,14 +22,14 @@ namespace GestaoDespesas.Data
             if (context.Despesas.Any(d => d.UserId == userId))
                 return;
 
-            // CATEGORIAS
+            // CATEGORIAS (com ícone + cor)
             var categorias = new List<Categoria>
             {
-                new() { Nome = "Alimentação", UserId = userId },
-                new() { Nome = "Transportes", UserId = userId },
-                new() { Nome = "Lazer", UserId = userId },
-                new() { Nome = "Habitação", UserId = userId },
-                new() { Nome = "Saúde", UserId = userId }
+                new() { Nome = "Alimentação", Icone = "bi-cup-straw", Cor = "#e74c3c", UserId = userId },
+                new() { Nome = "Transportes", Icone = "bi-car-front", Cor = "#3498db", UserId = userId },
+                new() { Nome = "Lazer", Icone = "bi-controller", Cor = "#9b59b6", UserId = userId },
+                new() { Nome = "Habitação", Icone = "bi-house", Cor = "#16a085", UserId = userId },
+                new() { Nome = "Saúde", Icone = "bi-heart-pulse", Cor = "#e84393", UserId = userId }
             };
 
             context.Categorias.AddRange(categorias);

@@ -1,13 +1,14 @@
-﻿@model GestaoDespesas.Models.Categoria
+@model GestaoDespesas.Models.Categoria
 
 @{
     ViewData["Title"] = "Editar categoria";
+    var icones = ViewBag.IconesDisponiveis as string[] ?? new string[0];
 }
 
-<div class="text-muted mb-4">Atualiza o nome da categoria.</div>
+<div class="text-muted mb-4">Atualiza o nome, ícone, cor ou categoria-pai.</div>
 
 <div class="row">
-    <div class="col-md-6 col-lg-4">
+    <div class="col-md-8 col-lg-6">
         <form asp-action="Edit" method="post">
             <input type="hidden" asp-for="CategoriaId" />
             <div asp-validation-summary="All" class="text-danger mb-3"></div>
@@ -18,6 +19,37 @@
                 <span asp-validation-for="Nome" class="text-danger"></span>
             </div>
 
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label asp-for="Icone" class="form-label"></label>
+                    <select asp-for="Icone" class="form-select" id="iconePicker">
+                        @foreach (var ic in icones)
+                        {
+                            if (ic == Model.Icone)
+                            {
+                                <option value="@ic" selected>@ic</option>
+                            }
+                            else
+                            {
+                                <option value="@ic">@ic</option>
+                            }
+                        }
+                    </select>
+                    <small class="text-muted">Pré-visualização: <i id="iconePreview" class="bi @Model.Icone"></i></small>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Cor" class="form-label"></label>
+                    <input asp-for="Cor" type="color" class="form-control form-control-color" id="corPicker" />
+                </div>
+            </div>
+
+            <div class="mb-3 mt-3">
+                <label asp-for="CategoriaPaiId" class="form-label"></label>
+                <select asp-for="CategoriaPaiId" asp-items="ViewBag.CategoriasPais" class="form-select">
+                    <option value="">— sem pai —</option>
+                </select>
+            </div>
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Guardar</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
@@ -25,3 +57,19 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const sel = document.getElementById('iconePicker');
+            const prev = document.getElementById('iconePreview');
+            function sync() {
+                prev.className = 'bi ' + (sel.value || 'bi-tag');
+            }
+            if (sel && prev) {
+                sel.addEventListener('change', sync);
+                sync();
+            }
+        })();
+    </script>
+}

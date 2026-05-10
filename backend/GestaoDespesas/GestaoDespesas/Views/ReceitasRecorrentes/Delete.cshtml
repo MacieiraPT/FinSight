@@ -1,0 +1,42 @@
+@model GestaoDespesas.Models.ReceitaRecorrente
+
+@{
+    ViewData["Title"] = "Apagar Receita Recorrente";
+}
+
+<h5 class="mb-4">Tens a certeza que queres apagar esta receita recorrente?</h5>
+
+<div class="card shadow-sm border-0 p-4">
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Descrição</dt>
+        <dd class="col-sm-9">@Model.Descricao</dd>
+
+        <dt class="col-sm-3">Valor</dt>
+        <dd class="col-sm-9 text-success">@Model.Valor.ToString("C")</dd>
+
+        <dt class="col-sm-3">Tipo</dt>
+        <dd class="col-sm-9">@Model.Tipo</dd>
+
+        <dt class="col-sm-3">Frequência</dt>
+        <dd class="col-sm-9">@Model.Frequencia</dd>
+
+        <dt class="col-sm-3">Estado</dt>
+        <dd class="col-sm-9">
+            @if (Model.Ativa)
+            {
+                <span class="badge bg-success">Ativa</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">Inativa</span>
+            }
+        </dd>
+    </dl>
+</div>
+
+<form asp-action="Delete" method="post" class="mt-4 d-flex gap-2">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="ReceitaRecorrenteId" />
+    <button type="submit" class="btn btn-danger">Apagar</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+</form>

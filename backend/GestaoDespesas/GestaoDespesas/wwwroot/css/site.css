@@ -525,3 +525,38 @@ html[data-theme="dark"] canvas {
     height: 0.9rem;
     border-width: 0.15em;
 }
+
+/* Chip visual de categoria (ícone + cor) */
+.cat-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.55rem;
+    color: #ffffff;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.cat-chip-sm {
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 0.4rem;
+    font-size: 0.8rem;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cat-chip-lg {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    font-size: 1.25rem;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}

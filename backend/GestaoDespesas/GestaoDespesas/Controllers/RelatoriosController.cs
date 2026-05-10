@@ -22,7 +22,7 @@ namespace GestaoDespesas.Controllers
             _userManager = userManager;
         }
 
-        public async Task<IActionResult> Index(string? dataInicio, string? dataFim)
+        public async Task<IActionResult> Index(string? dataInicio, string? dataFim, int? compareYear, int? compareMonth)
         {
             var userId = _userManager.GetUserId(User);
             var now = DateTime.UtcNow;
@@ -141,6 +141,79 @@ namespace GestaoDespesas.Controllers
                     Acumulado = acumulado
                 };
             }).ToList();
+
+            // Comparação entre meses (atual vs anterior) — independente do filtro acima
+            var compYear = compareYear ?? now.Year;
+            var compMonth = compareMonth ?? now.Month;
+            var compInicioAtual = new DateTime(compYear, compMonth, 1, 0, 0, 0, DateTimeKind.Utc);
+            var compFimAtual = compInicioAtual.AddMonths(1);
+            var compInicioAnterior = compInicioAtual.AddMonths(-1);
+
+            var despesasAtual = await _context.Despesas
+                .Where(d => d.UserId == userId && d.Data >= compInicioAtual && d.Data < compFimAtual)
+                .SumAsync(d => (decimal?)d.Valor) ?? 0m;
+            var receitasAtual = await _context.Receitas
+                .Where(r => r.UserId == userId && r.Data >= compInicioAtual && r.Data < compFimAtual)
+                .SumAsync(r => (decimal?)r.Valor) ?? 0m;
+            var despesasAnterior = await _context.Despesas
+                .Where(d => d.UserId == userId && d.Data >= compInicioAnterior && d.Data < compInicioAtual)
+                .SumAsync(d => (decimal?)d.Valor) ?? 0m;
+            var receitasAnterior = await _context.Receitas
+                .Where(r => r.UserId == userId && r.Data >= compInicioAnterior && r.Data < compInicioAtual)
+                .SumAsync(r => (decimal?)r.Valor) ?? 0m;
+
+            decimal Variacao(decimal cur, decimal prev) =>
+                prev == 0 ? 0m : Math.Round((cur - prev) / prev * 100m, 1);
+
+            // Comparação por categoria (top 8 do mês atual)
+            var ptComp = CultureInfo.GetCultureInfo("pt-PT");
+            var despAtualLista = await _context.Despesas
+                .Include(d => d.Categoria)
+                .Where(d => d.UserId == userId && d.Data >= compInicioAtual && d.Data < compFimAtual)
+                .ToListAsync();
+            var despAntLista = await _context.Despesas
+                .Include(d => d.Categoria)
+                .Where(d => d.UserId == userId && d.Data >= compInicioAnterior && d.Data < compInicioAtual)
+                .ToListAsync();
+
+            var compPorCategoria = despAtualLista
+                .Where(d => d.Categoria != null)
+                .GroupBy(d => new { d.CategoriaId, Nome = d.Categoria!.Nome, Cor = d.Categoria.Cor, Icone = d.Categoria.Icone })
+                .Select(g => new
+                {
+                    CategoriaId = g.Key.CategoriaId,
+                    Categoria = g.Key.Nome,
+                    Cor = g.Key.Cor,
+                    Icone = g.Key.Icone,
+                    Atual = g.Sum(x => x.Valor),
+                    Anterior = despAntLista.Where(x => x.CategoriaId == g.Key.CategoriaId).Sum(x => x.Valor)
+                })
+                .Select(x => new
+                {
+                    x.Categoria,
+                    x.Cor,
+                    x.Icone,
+                    x.Atual,
+                    x.Anterior,
+                    Variacao = Variacao(x.Atual, x.Anterior)
+                })
+                .OrderByDescending(x => x.Atual)
+                .Take(8)
+                .ToList();
+
+            ViewBag.CompYear = compYear;
+            ViewBag.CompMonth = compMonth;
+            ViewBag.CompMesAtualLabel = $"{ptComp.DateTimeFormat.GetMonthName(compMonth)} {compYear}";
+            ViewBag.CompMesAnteriorLabel = $"{ptComp.DateTimeFormat.GetMonthName(compInicioAnterior.Month)} {compInicioAnterior.Year}";
+            ViewBag.CompDespesasAtual = despesasAtual;
+            ViewBag.CompDespesasAnterior = despesasAnterior;
+            ViewBag.CompDespesasVar = Variacao(despesasAtual, despesasAnterior);
+            ViewBag.CompReceitasAtual = receitasAtual;
+            ViewBag.CompReceitasAnterior = receitasAnterior;
+            ViewBag.CompReceitasVar = Variacao(receitasAtual, receitasAnterior);
+            ViewBag.CompSaldoAtual = receitasAtual - despesasAtual;
+            ViewBag.CompSaldoAnterior = receitasAnterior - despesasAnterior;
+            ViewBag.CompPorCategoria = compPorCategoria;
 
             ViewBag.TotalDespesas = totalDespesas;
             ViewBag.TotalReceitas = totalReceitas;

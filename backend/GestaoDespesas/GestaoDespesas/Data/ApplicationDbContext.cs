@@ -45,6 +45,15 @@ namespace GestaoDespesas.Data
                 .HasIndex(c => new { c.UserId, c.Nome })
                 .IsUnique();
 
+            // Defaults DB-side para que linhas existentes recebam valores ao adicionar a coluna
+            builder.Entity<Categoria>()
+                .Property(c => c.Icone)
+                .HasDefaultValue("bi-tag");
+
+            builder.Entity<Categoria>()
+                .Property(c => c.Cor)
+                .HasDefaultValue("#6c757d");
+
             builder.Entity<UserProfile>()
                 .HasOne(p => p.User)
                 .WithOne()
@@ -68,6 +77,17 @@ namespace GestaoDespesas.Data
                 .WithMany()
                 .HasForeignKey(d => d.CategoriaId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Self-reference para sub-categorias (CategoriaPai → SubCategorias)
+            builder.Entity<Categoria>()
+                .HasOne(c => c.CategoriaPai)
+                .WithMany(c => c.SubCategorias)
+                .HasForeignKey(c => c.CategoriaPaiId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<ReceitaRecorrente>()
+                .Property(r => r.Valor)
+                .HasPrecision(18, 2);
         }
 
         public override int SaveChanges()
@@ -138,6 +158,7 @@ namespace GestaoDespesas.Data
         public DbSet<Receita> Receitas => Set<Receita>();
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<DespesaRecorrente> DespesasRecorrentes => Set<DespesaRecorrente>();
+        public DbSet<ReceitaRecorrente> ReceitasRecorrentes => Set<ReceitaRecorrente>();
         public DbSet<RegistoAuditoria> RegistosAuditoria => Set<RegistoAuditoria>();
     }
 }
