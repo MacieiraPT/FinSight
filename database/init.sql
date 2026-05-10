@@ -1,9 +1,25 @@
+-- =============================================================================
+-- FinSight - Esquema completo da base de dados (PostgreSQL)
+-- =============================================================================
+-- Gerado a partir das migrations EF Core do projeto GestaoDespesas:
+--   * 20260226191251_TestData          (esquema inicial)
+--   * 20260226210840_testAcc           (migration vazia / placeholder)
+--   * 20260310120000_AddReceitasTable  (tabela Receitas)
+--
+-- Este ficheiro é a referência completa do esquema. Aplicar a uma base de
+-- dados vazia produz exatamente o mesmo estado que correr
+-- `dotnet ef database update` no projeto.
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
     "MigrationId" character varying(150) NOT NULL,
     "ProductVersion" character varying(32) NOT NULL,
     CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
 );
 
+-- -----------------------------------------------------------------------------
+-- Migration: 20260226191251_TestData
+-- -----------------------------------------------------------------------------
 START TRANSACTION;
 
 CREATE TABLE "AspNetRoles" (
@@ -102,8 +118,10 @@ CREATE TABLE "Despesas" (
     "CategoriaId" integer NOT NULL,
     "Observacoes" text,
     "UserId" text NOT NULL,
+    "CategoriaId1" integer,
     CONSTRAINT "PK_Despesas" PRIMARY KEY ("DespesaId"),
-    CONSTRAINT "FK_Despesas_Categorias_CategoriaId" FOREIGN KEY ("CategoriaId") REFERENCES "Categorias" ("CategoriaId") ON DELETE CASCADE
+    CONSTRAINT "FK_Despesas_Categorias_CategoriaId" FOREIGN KEY ("CategoriaId") REFERENCES "Categorias" ("CategoriaId") ON DELETE RESTRICT,
+    CONSTRAINT "FK_Despesas_Categorias_CategoriaId1" FOREIGN KEY ("CategoriaId1") REFERENCES "Categorias" ("CategoriaId")
 );
 
 CREATE TABLE "Orcamentos" (
@@ -131,36 +149,34 @@ CREATE INDEX "EmailIndex" ON "AspNetUsers" ("NormalizedEmail");
 
 CREATE UNIQUE INDEX "UserNameIndex" ON "AspNetUsers" ("NormalizedUserName");
 
+CREATE UNIQUE INDEX "IX_Categorias_UserId_Nome" ON "Categorias" ("UserId", "Nome");
+
 CREATE INDEX "IX_Despesas_CategoriaId" ON "Despesas" ("CategoriaId");
+
+CREATE INDEX "IX_Despesas_CategoriaId1" ON "Despesas" ("CategoriaId1");
 
 CREATE INDEX "IX_Orcamentos_CategoriaId" ON "Orcamentos" ("CategoriaId");
 
 CREATE UNIQUE INDEX "IX_UserProfiles_UserId" ON "UserProfiles" ("UserId");
 
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260225190740_InitialPostgres', '8.0.24');
+VALUES ('20260226191251_TestData', '8.0.24');
 
 COMMIT;
 
+-- -----------------------------------------------------------------------------
+-- Migration: 20260226210840_testAcc (sem alterações de esquema)
+-- -----------------------------------------------------------------------------
 START TRANSACTION;
 
-ALTER TABLE "Despesas" DROP CONSTRAINT "FK_Despesas_Categorias_CategoriaId";
-
-ALTER TABLE "Despesas" ADD "CategoriaId1" integer;
-
-CREATE INDEX "IX_Despesas_CategoriaId1" ON "Despesas" ("CategoriaId1");
-
-CREATE UNIQUE INDEX "IX_Categorias_UserId_Nome" ON "Categorias" ("UserId", "Nome");
-
-ALTER TABLE "Despesas" ADD CONSTRAINT "FK_Despesas_Categorias_CategoriaId" FOREIGN KEY ("CategoriaId") REFERENCES "Categorias" ("CategoriaId") ON DELETE RESTRICT;
-
-ALTER TABLE "Despesas" ADD CONSTRAINT "FK_Despesas_Categorias_CategoriaId1" FOREIGN KEY ("CategoriaId1") REFERENCES "Categorias" ("CategoriaId");
-
 INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20260225205308_AppDbUpdate', '8.0.24');
+VALUES ('20260226210840_testAcc', '8.0.24');
 
 COMMIT;
 
+-- -----------------------------------------------------------------------------
+-- Migration: 20260310120000_AddReceitasTable
+-- -----------------------------------------------------------------------------
 START TRANSACTION;
 
 CREATE TABLE "Receitas" (
@@ -177,4 +193,3 @@ INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
 VALUES ('20260310120000_AddReceitasTable', '8.0.24');
 
 COMMIT;
-
