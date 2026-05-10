@@ -1,0 +1,242 @@
+@model FinSightPro.Application.DTOs.DashboardDto
+@{
+    ViewData["Title"] = "Dashboard";
+    var year = (int)ViewBag.Year;
+    var month = (int)ViewBag.Month;
+    var monthLabel = new System.Globalization.CultureInfo("pt-PT").DateTimeFormat.GetMonthName(month);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1"><i class="fa-solid fa-gauge-high text-primary"></i> Dashboard</h1>
+        <p class="text-muted mb-0">@monthLabel @year — visão geral do mês</p>
+    </div>
+    <form method="get" class="d-flex gap-2">
+        <input type="number" name="year" value="@year" min="2000" max="2100" class="form-control form-control-sm" style="width:6rem" />
+        <select name="month" class="form-select form-select-sm" style="width:9rem">
+            @for (int m = 1; m <= 12; m++)
+            {
+                var name = new System.Globalization.CultureInfo("pt-PT").DateTimeFormat.GetMonthName(m);
+                if (m == month)
+                {
+                    <option value="@m" selected>@name</option>
+                }
+                else
+                {
+                    <option value="@m">@name</option>
+                }
+            }
+        </select>
+        <button class="btn btn-primary btn-sm" type="submit"><i class="fa-solid fa-arrows-rotate"></i></button>
+    </form>
+</div>
+
+@if (Model.Alerts.Any())
+{
+    <div class="row g-2 mb-4">
+        @foreach (var a in Model.Alerts)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="alert alert-@a.Severity d-flex align-items-start gap-2 mb-0 shadow-sm">
+                    <i class="fa-solid @a.Icon mt-1"></i>
+                    <div>
+                        <strong>@a.Title</strong>
+                        <div class="small">@a.Message</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card kpi-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="kpi-label">Saldo do Mês</div>
+                <div class="kpi-value @(Model.Balance >= 0 ? "text-success" : "text-danger")">@Model.Balance.ToString("C", new System.Globalization.CultureInfo("pt-PT"))</div>
+                <small class="text-muted">Receitas − Despesas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card kpi-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="kpi-label">Despesas</div>
+                <div class="kpi-value text-danger">@Model.ExpensesMonth.ToString("C", new System.Globalization.CultureInfo("pt-PT"))</div>
+                <small class="@(Model.MonthOverMonthPercent <= 0 ? "text-success" : "text-danger")">
+                    @(Model.MonthOverMonthPercent >= 0 ? "+" : "")@Model.MonthOverMonthPercent% vs mês anterior
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card kpi-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="kpi-label">Receitas</div>
+                <div class="kpi-value text-success">@Model.IncomeMonth.ToString("C", new System.Globalization.CultureInfo("pt-PT"))</div>
+                <small class="text-muted">No mês corrente</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card kpi-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="kpi-label">Taxa de Poupança</div>
+                <div class="kpi-value">@Model.SavingsRate%</div>
+                <small class="text-muted">Projeção: @Model.ProjectedMonthSpend.ToString("C", new System.Globalization.CultureInfo("pt-PT"))</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between">
+                <h5 class="mb-0"><i class="fa-solid fa-chart-column text-primary"></i> Receitas vs Despesas — Últimos 12 meses</h5>
+            </div>
+            <div class="card-body"><canvas id="chartMonthly" height="120"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0"><i class="fa-solid fa-chart-pie text-warning"></i> Distribuição por Categoria</h5>
+            </div>
+            <div class="card-body"><canvas id="chartByCategory"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0"><i class="fa-solid fa-arrow-trend-up text-success"></i> Evolução do Saldo</h5>
+            </div>
+            <div class="card-body"><canvas id="chartBalance" height="160"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0"><i class="fa-solid fa-trophy text-warning"></i> Top 5 Categorias</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var c in Model.TopCategories)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid @c.Icon" style="color:@c.Color"></i> @c.CategoryName</span>
+                        <strong>@c.Total.ToString("C", new System.Globalization.CultureInfo("pt-PT"))</strong>
+                    </li>
+                }
+                @if (!Model.TopCategories.Any())
+                {
+                    <li class="list-group-item text-muted">Sem dados ainda este mês.</li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0"><i class="fa-solid fa-clock-rotate-left text-secondary"></i> Despesas Recentes</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var e in Model.RecentExpenses)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="fa-solid @(e.CategoryIcon ?? "fa-tag")" style="color:@(e.CategoryColor ?? "#6c757d")"></i>
+                            @e.Description
+                            <small class="text-muted ms-2">@e.Date.ToString("dd MMM")</small>
+                        </span>
+                        <strong>@e.Amount.ToString("C", new System.Globalization.CultureInfo("pt-PT"))</strong>
+                    </li>
+                }
+                @if (!Model.RecentExpenses.Any())
+                {
+                    <li class="list-group-item text-muted">Ainda sem despesas este mês.</li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0"><i class="fa-solid fa-piggy-bank text-success"></i> Orçamentos do mês</h5>
+            </div>
+            <div class="card-body">
+                @if (!Model.Budgets.Any())
+                {
+                    <p class="text-muted mb-0">Não tens orçamentos definidos. <a asp-controller="Orcamentos" asp-action="Create">Criar agora</a>.</p>
+                }
+                else
+                {
+                    foreach (var b in Model.Budgets)
+                    {
+                        var pct = (double)Math.Min(b.PercentUsed, 100m);
+                        var cls = b.PercentUsed >= 100 ? "bg-danger" : (b.PercentUsed >= 90 ? "bg-warning" : (b.PercentUsed >= 75 ? "bg-info" : "bg-success"));
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small">
+                                <span><i class="fa-solid @b.CategoryIcon" style="color:@b.CategoryColor"></i> @b.CategoryName</span>
+                                <span>@b.Spent.ToString("C", new System.Globalization.CultureInfo("pt-PT")) / @b.MonthlyLimit.ToString("C", new System.Globalization.CultureInfo("pt-PT"))</span>
+                            </div>
+                            <div class="progress" style="height:.6rem">
+                                <div class="progress-bar @cls" style="width:@pct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const monthlyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Last12Months.Select(m => new { m.Label, m.Income, m.Expenses })));
+        const categoryData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ExpensesByCategory.Select(c => new { c.CategoryName, c.Total, c.Color })));
+        const balanceData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BalanceTrend.Select(m => new { m.Label, Balance = m.Income - m.Expenses })));
+
+        const fmtEUR = v => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+
+        new Chart(document.getElementById('chartMonthly'), {
+            type: 'bar',
+            data: {
+                labels: monthlyData.map(m => m.Label),
+                datasets: [
+                    { label: 'Receitas', data: monthlyData.map(m => m.Income), backgroundColor: 'rgba(25, 135, 84, .7)' },
+                    { label: 'Despesas', data: monthlyData.map(m => m.Expenses), backgroundColor: 'rgba(220, 53, 69, .7)' }
+                ]
+            },
+            options: { responsive: true, plugins: { tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtEUR(c.raw) } } } }
+        });
+
+        new Chart(document.getElementById('chartByCategory'), {
+            type: 'doughnut',
+            data: {
+                labels: categoryData.map(c => c.CategoryName),
+                datasets: [{ data: categoryData.map(c => c.Total), backgroundColor: categoryData.map(c => c.Color) }]
+            },
+            options: { plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => c.label + ': ' + fmtEUR(c.raw) } } } }
+        });
+
+        new Chart(document.getElementById('chartBalance'), {
+            type: 'line',
+            data: {
+                labels: balanceData.map(m => m.Label),
+                datasets: [{
+                    label: 'Saldo', data: balanceData.map(m => m.Balance),
+                    borderColor: 'rgba(13, 110, 253, .9)', backgroundColor: 'rgba(13, 110, 253, .1)',
+                    fill: true, tension: .35
+                }]
+            },
+            options: { responsive: true, plugins: { tooltip: { callbacks: { label: c => fmtEUR(c.raw) } } } }
+        });
+    </script>
+}

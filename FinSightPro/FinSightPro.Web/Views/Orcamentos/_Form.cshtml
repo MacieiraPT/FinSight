@@ -1,0 +1,32 @@
+@model FinSightPro.Web.ViewModels.BudgetFormViewModel
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="CategoryId" class="form-label"></label>
+        <select asp-for="CategoryId" class="form-select">
+            <option value="">— escolher —</option>
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+        </select>
+        <span asp-validation-for="CategoryId" class="text-danger small"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="MonthlyLimit" class="form-label"></label>
+        <input asp-for="MonthlyLimit" type="number" step="0.01" class="form-control" />
+        <span asp-validation-for="MonthlyLimit" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Month" class="form-label"></label>
+        <select asp-for="Month" class="form-select">
+            @for (int m = 1; m <= 12; m++)
+            {
+                <option value="@m">@(new System.Globalization.CultureInfo("pt-PT").DateTimeFormat.GetMonthName(m))</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Year" class="form-label"></label>
+        <input asp-for="Year" type="number" class="form-control" />
+    </div>
+</div>

@@ -1,0 +1,31 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# Secrets and local config
+appsettings.Development.json
+*.pfx
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (keep folder via .gitkeep)
+FinSightPro.Web/wwwroot/uploads/*
+!FinSightPro.Web/wwwroot/uploads/.gitkeep

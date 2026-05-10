@@ -1,0 +1,21 @@
+@model FinSightPro.Application.DTOs.CategoryDto
+@{ ViewData["Title"] = "Detalhes da Categoria"; }
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body d-flex align-items-center gap-3">
+        <div class="category-icon" style="background-color:@Model.Color">
+            <i class="fa-solid @Model.Icon"></i>
+        </div>
+        <div>
+            <h1 class="h4 mb-0">@Model.Name</h1>
+            @if (!string.IsNullOrEmpty(Model.ParentCategoryName))
+            {
+                <small class="text-muted">↳ @Model.ParentCategoryName</small>
+            }
+        </div>
+    </div>
+    <div class="card-footer bg-transparent d-flex justify-content-end gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">Voltar</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Editar</a>
+    </div>
+</div>
