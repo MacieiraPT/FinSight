@@ -8,8 +8,15 @@
     <div class="card-body">
         <p>Tens a certeza que queres eliminar esta categoria?</p>
 
-        <div class="fw-semibold mb-3">
+        <div class="d-flex align-items-center gap-2 fw-semibold mb-3">
+            <span class="cat-chip" style="background-color:@Model.Cor">
+                <i class="bi @Model.Icone"></i>
+            </span>
             @Model.Nome
+            @if (Model.CategoriaPai != null)
+            {
+                <small class="text-muted">↳ @Model.CategoriaPai.Nome</small>
+            }
         </div>
 
         <form asp-action="Delete">

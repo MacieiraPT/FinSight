@@ -23,14 +23,27 @@ public class DashboardController : Controller
 
         var inicioMes = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var fimMes = inicioMes.AddMonths(1);
+        var inicioMesAnterior = inicioMes.AddMonths(-1);
 
         var despesasMes = await _context.Despesas
+            .Include(d => d.Categoria)
             .Where(d => d.UserId == userId &&
                         d.Data >= inicioMes &&
                         d.Data < fimMes)
             .ToListAsync();
 
         var totalMes = despesasMes.Sum(d => d.Valor);
+
+        // Despesas do mês anterior (para variação MoM)
+        var totalMesAnterior = await _context.Despesas
+            .Where(d => d.UserId == userId &&
+                        d.Data >= inicioMesAnterior &&
+                        d.Data < inicioMes)
+            .SumAsync(d => (decimal?)d.Valor) ?? 0m;
+
+        decimal variacaoMoM = totalMesAnterior == 0
+            ? 0m
+            : Math.Round((totalMes - totalMesAnterior) / totalMesAnterior * 100m, 1);
 
         // Receitas do mês atual
         var receitasMes = await _context.Receitas
@@ -41,6 +54,17 @@ public class DashboardController : Controller
 
         var totalReceitasMes = receitasMes.Sum(r => r.Valor);
         var saldoMes = totalReceitasMes - totalMes;
+
+        // Taxa de poupança
+        decimal taxaPoupanca = totalReceitasMes <= 0
+            ? 0m
+            : Math.Round(saldoMes / totalReceitasMes * 100m, 1);
+
+        // Projeção até fim do mês com base na média diária
+        var diasNoMes = DateTime.DaysInMonth(now.Year, now.Month);
+        var diasDecorridos = now.Day;
+        var mediaDiaria = diasDecorridos > 0 ? totalMes / diasDecorridos : 0m;
+        var projecaoMes = Math.Round(mediaDiaria * diasNoMes, 2);
 
         var profile = await _context.UserProfiles
             .FirstOrDefaultAsync(p => p.UserId == userId);
@@ -65,19 +89,29 @@ public class DashboardController : Controller
                 alerta = true;
         }
 
-        // Distribuição por categoria
-        var porCategoria = await _context.Despesas
-            .Where(d => d.UserId == userId &&
-                        d.Data.Month == now.Month &&
-                        d.Data.Year == now.Year &&
-                        d.Categoria != null)
-            .GroupBy(d => d.Categoria!.Nome)
+        // Distribuição por categoria + cor + ícone (este mês)
+        var porCategoria = despesasMes
+            .Where(d => d.Categoria != null)
+            .GroupBy(d => new
+            {
+                d.Categoria!.CategoriaId,
+                d.Categoria.Nome,
+                d.Categoria.Cor,
+                d.Categoria.Icone
+            })
             .Select(g => new
             {
-                Categoria = g.Key,
+                CategoriaId = g.Key.CategoriaId,
+                Categoria = g.Key.Nome,
+                Cor = g.Key.Cor,
+                Icone = g.Key.Icone,
                 Total = g.Sum(x => x.Valor)
             })
-            .ToListAsync();
+            .OrderByDescending(x => x.Total)
+            .ToList();
+
+        // Top 5 categorias
+        var top5 = porCategoria.Take(5).ToList();
 
         // Últimos 6 meses
         var seisMeses = Enumerable.Range(0, 6)
@@ -119,6 +153,8 @@ public class DashboardController : Controller
             .Select(o => new
             {
                 Categoria = o.Categoria!.Nome,
+                Cor = o.Categoria.Cor,
+                Icone = o.Categoria.Icone,
                 Limite = o.Limite,
                 TotalGasto = despesasMes
                     .Where(d => d.CategoriaId == o.CategoriaId)
@@ -127,9 +163,17 @@ public class DashboardController : Controller
             .ToList();
 
         ViewBag.TotalMes = totalMes;
+        ViewBag.TotalMesAnterior = totalMesAnterior;
+        ViewBag.VariacaoMoM = variacaoMoM;
         ViewBag.TotalReceitasMes = totalReceitasMes;
         ViewBag.SaldoMes = saldoMes;
+        ViewBag.TaxaPoupanca = taxaPoupanca;
+        ViewBag.ProjecaoMes = projecaoMes;
+        ViewBag.MediaDiaria = mediaDiaria;
+        ViewBag.DiasNoMes = diasNoMes;
+        ViewBag.DiasDecorridos = diasDecorridos;
         ViewBag.Categorias = porCategoria;
+        ViewBag.Top5 = top5;
         ViewBag.SeisMeses = dados6Meses;
         ViewBag.Progresso = progressoOrcamentos;
         ViewBag.LimitePermitido = limitePermitido;

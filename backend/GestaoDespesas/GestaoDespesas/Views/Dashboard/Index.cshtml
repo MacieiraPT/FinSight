@@ -2,9 +2,17 @@
 @{
     ViewData["Title"] = "Dashboard";
     var totalMes = (decimal)ViewBag.TotalMes;
+    var totalMesAnterior = (decimal)ViewBag.TotalMesAnterior;
+    var variacaoMoM = (decimal)ViewBag.VariacaoMoM;
     var totalReceitasMes = (decimal)ViewBag.TotalReceitasMes;
     var saldoMes = (decimal)ViewBag.SaldoMes;
+    var taxaPoupanca = (decimal)ViewBag.TaxaPoupanca;
+    var projecaoMes = (decimal)ViewBag.ProjecaoMes;
+    var mediaDiaria = (decimal)ViewBag.MediaDiaria;
+    var diasNoMes = (int)ViewBag.DiasNoMes;
+    var diasDecorridos = (int)ViewBag.DiasDecorridos;
     var categorias = ViewBag.Categorias;
+    var top5 = ViewBag.Top5 as IEnumerable<dynamic>;
     var ptCulture = new CultureInfo("pt-PT");
 }
 
@@ -74,9 +82,18 @@ else if (ViewBag.Alerta == true)
                 @totalMes.ToString("C", ptCulture)
             </div>
 
-            <div class="small text-muted mt-1">
-                Total de saídas registadas
-            </div>
+            @if (totalMesAnterior > 0)
+            {
+                var setaCls = variacaoMoM > 0 ? "text-danger" : (variacaoMoM < 0 ? "text-success" : "text-muted");
+                var seta = variacaoMoM > 0 ? "↑" : (variacaoMoM < 0 ? "↓" : "→");
+                <div class="small @setaCls mt-1">
+                    @seta @(variacaoMoM > 0 ? "+" : "")@variacaoMoM.ToString("0.#")% vs mês anterior
+                </div>
+            }
+            else
+            {
+                <div class="small text-muted mt-1">Total de saídas registadas</div>
+            }
         </div>
     </div>
 
@@ -95,6 +112,60 @@ else if (ViewBag.Alerta == true)
         </div>
     </div>
 
+</div>
+
+<!-- KPIs avançados: poupança + projeção + top 5 -->
+<div class="row g-4 mb-2 mt-1">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-4 dashboard-card h-100">
+            <div class="text-muted mb-1">Taxa de poupança</div>
+            <div class="display-6 fw-bold @(taxaPoupanca >= 0 ? "text-success" : "text-danger") lh-1">
+                @taxaPoupanca.ToString("0.#")%
+            </div>
+            <div class="small text-muted mt-1">
+                Saldo / Receitas do mês
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-4 dashboard-card h-100">
+            <div class="text-muted mb-1">Projeção até fim do mês</div>
+            <div class="display-6 fw-bold text-primary lh-1">
+                @projecaoMes.ToString("C", ptCulture)
+            </div>
+            <div class="small text-muted mt-1">
+                Média diária @mediaDiaria.ToString("C", ptCulture) · @diasDecorridos / @diasNoMes dias
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-4 dashboard-card h-100">
+            <div class="text-muted mb-2">Top 5 categorias</div>
+            @if (top5 != null && top5.Any())
+            {
+                <ul class="list-unstyled mb-0 small">
+                    @foreach (var c in top5)
+                    {
+                        <li class="d-flex justify-content-between align-items-center py-1">
+                            <span class="d-inline-flex align-items-center gap-2">
+                                <span class="cat-chip-sm" style="background-color:@c.Cor">
+                                    <i class="bi @c.Icone"></i>
+                                </span>
+                                @c.Categoria
+                            </span>
+                            <strong>@(((decimal)c.Total).ToString("C", ptCulture))</strong>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="text-muted small">Sem despesas este mês.</div>
+            }
+        </div>
+    </div>
 </div>
 
 <!-- LIMITE -->
@@ -197,7 +268,15 @@ else if (ViewBag.Alerta == true)
             <div class="mb-3">
 
                 <div class="d-flex justify-content-between">
-                    <strong>@o.Categoria</strong>
+                    <strong class="d-inline-flex align-items-center gap-2">
+                        @if (o.Cor != null && o.Icone != null)
+                        {
+                            <span class="cat-chip-sm" style="background-color:@o.Cor">
+                                <i class="bi @o.Icone"></i>
+                            </span>
+                        }
+                        @o.Categoria
+                    </strong>
                     <span>@percent.ToString("0")%</span>
                 </div>
 
@@ -240,7 +319,7 @@ else if (ViewBag.Alerta == true)
 
     const total = valores.reduce((a, b) => a + b, 0);
 
-    function gerarCores(n) {
+    function gerarCoresFallback(n) {
         const cores = [];
         for (let i = 0; i < n; i++) {
             const hue = Math.floor((360 / n) * i);
@@ -249,7 +328,9 @@ else if (ViewBag.Alerta == true)
         return cores;
     }
 
-    const cores = gerarCores(valores.length);
+    // Usar a cor real da categoria sempre que disponível, com fallback HSL
+    const fallback = gerarCoresFallback(valores.length);
+    const cores = categorias.map((c, i) => (c.Cor && c.Cor.length > 0) ? c.Cor : fallback[i]);
 
     new Chart(document.getElementById('graficoCategorias'), {
         type: 'doughnut',

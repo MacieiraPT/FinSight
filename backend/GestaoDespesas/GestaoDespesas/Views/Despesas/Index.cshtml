@@ -235,7 +235,13 @@ else
                         <input type="checkbox" class="form-check-input bulk-check" name="ids" value="@item.DespesaId" />
                     </td>
                     <td class="fw-semibold">@item.Descricao</td>
-                    <td>@item.Categoria?.Nome</td>
+                    <td>
+                        @if (item.Categoria != null)
+                        {
+                            <span class="cat-chip-sm me-1" style="background-color:@item.Categoria.Cor"><i class="bi @item.Categoria.Icone"></i></span>
+                            @item.Categoria.Nome
+                        }
+                    </td>
                     <td>@item.Data.ToString("dd/MM/yyyy")</td>
                     <td class="text-end fw-semibold">
                         @item.Valor.ToString("C")

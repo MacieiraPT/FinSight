@@ -1,4 +1,4 @@
-﻿@model GestaoDespesas.Models.Categoria
+@model GestaoDespesas.Models.Categoria
 
 @{
     ViewData["Title"] = "Detalhes da categoria";
@@ -24,15 +24,35 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
-
         <div class="row mb-3">
-            <div class="col-sm-3 text-muted">
-                Nome
-            </div>
-            <div class="col-sm-9 fw-semibold">
-                @Model.Nome
+            <div class="col-sm-3 text-muted">Ícone</div>
+            <div class="col-sm-9">
+                <span class="cat-chip" style="background-color:@Model.Cor">
+                    <i class="bi @Model.Icone"></i>
+                </span>
+                <code class="ms-2 small">@Model.Icone</code>
             </div>
         </div>
 
+        <div class="row mb-3">
+            <div class="col-sm-3 text-muted">Nome</div>
+            <div class="col-sm-9 fw-semibold">@Model.Nome</div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-sm-3 text-muted">Cor</div>
+            <div class="col-sm-9">
+                <span class="d-inline-block rounded" style="width:1.4rem;height:1.4rem;background:@Model.Cor;vertical-align:middle"></span>
+                <code class="ms-2 small">@Model.Cor</code>
+            </div>
+        </div>
+
+        @if (Model.CategoriaPai != null)
+        {
+            <div class="row mb-3">
+                <div class="col-sm-3 text-muted">Categoria-pai</div>
+                <div class="col-sm-9">@Model.CategoriaPai.Nome</div>
+            </div>
+        }
     </div>
 </div>

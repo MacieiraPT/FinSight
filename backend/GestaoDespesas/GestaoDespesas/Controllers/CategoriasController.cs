@@ -1,8 +1,10 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using GestaoDespesas.Data;
@@ -16,6 +18,15 @@ namespace GestaoDespesas.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
 
+        // Conjunto de ícones Bootstrap Icons disponíveis na UI
+        public static readonly string[] IconesDisponiveis = new[]
+        {
+            "bi-tag", "bi-cup-straw", "bi-house", "bi-car-front", "bi-heart-pulse",
+            "bi-controller", "bi-cart3", "bi-bag", "bi-mortarboard", "bi-shield-check",
+            "bi-piggy-bank", "bi-credit-card", "bi-receipt", "bi-tools", "bi-airplane",
+            "bi-tv", "bi-phone", "bi-bicycle", "bi-stars", "bi-three-dots"
+        };
+
         public CategoriasController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
             _context = context;
@@ -28,8 +39,10 @@ namespace GestaoDespesas.Controllers
             var userId = _userManager.GetUserId(User);
 
             var categorias = await _context.Categorias
+                .Include(c => c.CategoriaPai)
                 .Where(c => c.UserId == userId)
-                .OrderBy(c => c.Nome)
+                .OrderBy(c => c.CategoriaPaiId == null ? 0 : 1)
+                .ThenBy(c => c.Nome)
                 .ToListAsync();
 
             return View(categorias);
@@ -42,21 +55,21 @@ namespace GestaoDespesas.Controllers
         {
             var userId = _userManager.GetUserId(User);
 
-            var categoriasDefault = new[]
+            var categoriasDefault = new (string Nome, string Icone, string Cor)[]
             {
-                "Alimentação",
-                "Habitação",
-                "Transportes",
-                "Saúde",
-                "Educação",
-                "Lazer",
-                "Compras",
-                "Subscrições",
-                "Seguros",
-                "Outros"
+                ("Alimentação", "bi-cup-straw", "#e74c3c"),
+                ("Habitação", "bi-house", "#16a085"),
+                ("Transportes", "bi-car-front", "#3498db"),
+                ("Saúde", "bi-heart-pulse", "#e84393"),
+                ("Educação", "bi-mortarboard", "#f39c12"),
+                ("Lazer", "bi-controller", "#9b59b6"),
+                ("Compras", "bi-bag", "#2ecc71"),
+                ("Subscrições", "bi-tv", "#8e44ad"),
+                ("Seguros", "bi-shield-check", "#34495e"),
+                ("Outros", "bi-three-dots", "#7f8c8d")
             };
 
-            foreach (var nome in categoriasDefault)
+            foreach (var (nome, icone, cor) in categoriasDefault)
             {
                 bool exists = await _context.Categorias
                     .AnyAsync(c => c.UserId == userId && c.Nome == nome);
@@ -66,6 +79,8 @@ namespace GestaoDespesas.Controllers
                     _context.Categorias.Add(new Categoria
                     {
                         Nome = nome,
+                        Icone = icone,
+                        Cor = cor,
                         UserId = userId
                     });
                 }
@@ -85,6 +100,7 @@ namespace GestaoDespesas.Controllers
             var userId = _userManager.GetUserId(User);
 
             var categoria = await _context.Categorias
+                .Include(c => c.CategoriaPai)
                 .FirstOrDefaultAsync(c => c.CategoriaId == id && c.UserId == userId);
 
             if (categoria == null) return NotFound();
@@ -93,19 +109,32 @@ namespace GestaoDespesas.Controllers
         }
 
         // GET: Categorias/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            await PreencherViewBagsAsync(null);
             return View();
         }
 
         // POST: Categorias/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Nome")] Categoria categoria)
+        public async Task<IActionResult> Create([Bind("Nome,Icone,Cor,CategoriaPaiId")] Categoria categoria)
         {
+            var userId = _userManager.GetUserId(User);
+
+            // Validar categoria-pai (se indicada, tem de pertencer ao utilizador)
+            if (categoria.CategoriaPaiId.HasValue)
+            {
+                var paiOk = await _context.Categorias
+                    .AnyAsync(c => c.CategoriaId == categoria.CategoriaPaiId.Value && c.UserId == userId);
+                if (!paiOk) ModelState.AddModelError(nameof(categoria.CategoriaPaiId), "Categoria-pai inválida.");
+            }
+
             if (ModelState.IsValid)
             {
-                categoria.UserId = _userManager.GetUserId(User);
+                categoria.UserId = userId!;
+                if (string.IsNullOrWhiteSpace(categoria.Icone)) categoria.Icone = "bi-tag";
+                if (string.IsNullOrWhiteSpace(categoria.Cor)) categoria.Cor = "#6c757d";
 
                 _context.Add(categoria);
                 await _context.SaveChangesAsync();
@@ -113,6 +142,7 @@ namespace GestaoDespesas.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            await PreencherViewBagsAsync(categoria.CategoriaPaiId);
             return View(categoria);
         }
 
@@ -128,36 +158,53 @@ namespace GestaoDespesas.Controllers
 
             if (categoria == null) return NotFound();
 
+            await PreencherViewBagsAsync(categoria.CategoriaPaiId, excluirId: id.Value);
             return View(categoria);
         }
 
         // POST: Categorias/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CategoriaId,Nome")] Categoria categoria)
+        public async Task<IActionResult> Edit(int id, [Bind("CategoriaId,Nome,Icone,Cor,CategoriaPaiId")] Categoria categoria)
         {
             if (id != categoria.CategoriaId) return NotFound();
 
             var userId = _userManager.GetUserId(User);
 
-            // Garante que a categoria pertence ao utilizador logado
             var categoriaDb = await _context.Categorias
                 .FirstOrDefaultAsync(c => c.CategoriaId == id && c.UserId == userId);
 
             if (categoriaDb == null) return NotFound();
 
+            // Não pode ser pai dela própria
+            if (categoria.CategoriaPaiId.HasValue && categoria.CategoriaPaiId.Value == id)
+                ModelState.AddModelError(nameof(categoria.CategoriaPaiId), "Uma categoria não pode ser pai dela própria.");
+
+            if (categoria.CategoriaPaiId.HasValue)
+            {
+                var paiOk = await _context.Categorias
+                    .AnyAsync(c => c.CategoriaId == categoria.CategoriaPaiId.Value && c.UserId == userId);
+                if (!paiOk) ModelState.AddModelError(nameof(categoria.CategoriaPaiId), "Categoria-pai inválida.");
+
+                // Evitar ciclos: o pai não pode ser descendente desta categoria
+                if (await EhDescendenteAsync(categoria.CategoriaPaiId.Value, id, userId!))
+                    ModelState.AddModelError(nameof(categoria.CategoriaPaiId), "Não podes escolher uma sub-categoria como pai.");
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Atualizar apenas o que é editável
                     categoriaDb.Nome = categoria.Nome;
+                    categoriaDb.Icone = string.IsNullOrWhiteSpace(categoria.Icone) ? "bi-tag" : categoria.Icone;
+                    categoriaDb.Cor = string.IsNullOrWhiteSpace(categoria.Cor) ? "#6c757d" : categoria.Cor;
+                    categoriaDb.CategoriaPaiId = categoria.CategoriaPaiId;
 
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CategoriaExists(id, userId)) return NotFound();
+                    if (!CategoriaExists(id, userId!)) return NotFound();
                     throw;
                 }
 
@@ -165,6 +212,7 @@ namespace GestaoDespesas.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            await PreencherViewBagsAsync(categoria.CategoriaPaiId, excluirId: id);
             return View(categoriaDb);
         }
 
@@ -176,6 +224,7 @@ namespace GestaoDespesas.Controllers
             var userId = _userManager.GetUserId(User);
 
             var categoria = await _context.Categorias
+                .Include(c => c.CategoriaPai)
                 .FirstOrDefaultAsync(c => c.CategoriaId == id && c.UserId == userId);
 
             if (categoria == null) return NotFound();
@@ -193,16 +242,24 @@ namespace GestaoDespesas.Controllers
             var categoria = await _context.Categorias
                 .FirstOrDefaultAsync(c => c.CategoriaId == id && c.UserId == userId);
 
+            if (categoria == null) return NotFound();
+
             var temDespesas = await _context.Despesas
                 .AnyAsync(d => d.CategoriaId == id && d.UserId == userId);
-
-            if (categoria == null)
-                return NotFound();
+            var temSubs = await _context.Categorias
+                .AnyAsync(c => c.CategoriaPaiId == id && c.UserId == userId);
 
             if (temDespesas)
             {
                 TempData["ToastDanger"] =
                     "Não podes eliminar esta categoria porque existem despesas associadas.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (temSubs)
+            {
+                TempData["ToastDanger"] =
+                    "Não podes eliminar esta categoria porque tem sub-categorias associadas.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -216,10 +273,52 @@ namespace GestaoDespesas.Controllers
             catch (DbUpdateException)
             {
                 TempData["ToastDanger"] =
-                    "Não é possível eliminar esta categoria porque existem despesas associadas.";
+                    "Não é possível eliminar esta categoria porque existem registos associados.";
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        private async Task PreencherViewBagsAsync(int? selecionado, int? excluirId = null)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var query = _context.Categorias.Where(c => c.UserId == userId);
+            if (excluirId.HasValue)
+                query = query.Where(c => c.CategoriaId != excluirId.Value);
+
+            var pais = await query.OrderBy(c => c.Nome).ToListAsync();
+
+            ViewBag.CategoriasPais = new SelectList(pais, "CategoriaId", "Nome", selecionado);
+            ViewBag.IconesDisponiveis = IconesDisponiveis;
+        }
+
+        // Verifica se candidatoId é descendente de raizId (na sub-árvore de raizId)
+        private async Task<bool> EhDescendenteAsync(int candidatoId, int raizId, string userId)
+        {
+            var todas = await _context.Categorias
+                .Where(c => c.UserId == userId)
+                .Select(c => new { c.CategoriaId, c.CategoriaPaiId })
+                .ToListAsync();
+
+            var visitado = new HashSet<int>();
+            var fila = new Queue<int>();
+            fila.Enqueue(raizId);
+
+            while (fila.Count > 0)
+            {
+                var atual = fila.Dequeue();
+                if (!visitado.Add(atual)) continue;
+
+                var filhos = todas.Where(c => c.CategoriaPaiId == atual).Select(c => c.CategoriaId);
+                foreach (var f in filhos)
+                {
+                    if (f == candidatoId) return true;
+                    fila.Enqueue(f);
+                }
+            }
+
+            return false;
         }
 
         private bool CategoriaExists(int id, string userId)

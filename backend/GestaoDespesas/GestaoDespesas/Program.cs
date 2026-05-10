@@ -24,6 +24,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 
 builder.Services.AddScoped<AuditoriaService>();
 builder.Services.AddScoped<DespesasRecorrentesService>();
+builder.Services.AddScoped<ReceitasRecorrentesService>();
 
 builder.Services.AddControllersWithViews();
 
@@ -107,6 +108,10 @@ using (var scope = app.Services.CreateScope())
     // Processar despesas recorrentes pendentes
     var recorrentesService = new DespesasRecorrentesService(context);
     await recorrentesService.ProcessarRecorrentesAsync();
+
+    // Processar receitas recorrentes pendentes
+    var receitasRecorrentesService = new ReceitasRecorrentesService(context);
+    await receitasRecorrentesService.ProcessarRecorrentesAsync();
 }
 
 // Configure the HTTP request pipeline.
